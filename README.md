@@ -1,4 +1,4 @@
-[![Code Build Status](https://github.com/ossuminc/riddl-lsp/actions/workflows/scala.yml/badge.svg)](https://github.com/ossuminc/riddl-lsp/actions/workflows/scala.yml/badge.svg)
+[![Code Build Status](https://github.com/ossuminc/riddl-lsp/actions/workflows/build.yml/badge.svg)](https://github.com/ossuminc/riddl-lsp/actions/workflows/build.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/ossuminc/riddl/badge.svg?branch=main)](https://coveralls.io/github/ossuminc/riddl-lsp?branch=main)
 
 [![CLA assistant](https://cla-assistant.io/readme/badge/ossuminc/riddl)](https://cla-assistant.io/ossuminc/riddl-lsp)
