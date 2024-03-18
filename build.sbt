@@ -18,7 +18,7 @@ lazy val riddl: Project = Root("", "riddl", startYr = 2024)
     gitHubOrganization := "ossuminc",
     publish / skip := true
   )
-  .aggregate(server)
+  .aggregate(server, plugin)
 
 lazy val Server = config("server")
 lazy val server: Project = Module("server", "riddl-lsp-server")
@@ -26,11 +26,26 @@ lazy val server: Project = Module("server", "riddl-lsp-server")
   .configure(
     With.typical,
     With.build_info,
-    With.coverage(70) /*, With.native()*/
+    With.coverage(90) /*, With.native()*/
   )
   .settings(
     buildInfoPackage := "com.ossuminc.riddl.lsp.server",
-    buildInfoObject := "RiddlBuildInfo",
+    buildInfoObject := "RiddlLSPServerBuildInfo",
     description := "The server for the LSP for RIDDL",
+    libraryDependencies ++= Dep.testing
+  )
+
+lazy val Plugin = config("plugin")
+lazy val plugin: Project = Module("plugin", "riddl-lsp-plugin")
+  .enablePlugins(OssumIncPlugin)
+  .configure(
+    With.typical,
+    With.build_info,
+    With.coverage(90) /*, With.native()*/
+  )
+  .settings(
+    buildInfoPackage := "com.ossuminc.riddl.lsp.plugin",
+    buildInfoObject := "RiddlLSPPluginBuildInfo",
+    description := "The plugin for supporting RIDDL in IntelliJ",
     libraryDependencies ++= Dep.testing
   )
