@@ -3,7 +3,7 @@ import com.ossuminc.sbt.helpers.RootProjectInfo.Keys.{
   gitHubOrganization,
   gitHubRepository
 }
-import org.scoverage.coveralls.Imports.CoverallsKeys._
+import org.scoverage.coveralls.Imports.CoverallsKeys.*
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++= Set(mainClass)
@@ -32,7 +32,13 @@ lazy val server: Project = Module("server", "riddl-lsp-server")
     buildInfoPackage := "com.ossuminc.riddl.lsp.server",
     buildInfoObject := "RiddlLSPServerBuildInfo",
     description := "The server for the LSP for RIDDL",
-    libraryDependencies ++= Dep.testing ++ Dep.basic
+    libraryDependencies ++= Dep.testing ++ Dep.basic ++ Seq(
+      Dep.lang3,
+      Dep.pureconfig,
+      Dep.scopt,
+      Dep.slf4j,
+      Dep.lsp4j
+    )
   )
 
 lazy val Plugin = config("plugin")

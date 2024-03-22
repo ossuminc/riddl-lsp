@@ -5,7 +5,7 @@ import org.eclipse.lsp4j.services.{LanguageServer, TextDocumentService, Workspac
 
 import java.util.concurrent.CompletableFuture
 
-object RiddlLSPServer extends LanguageServer {
+class RiddlLSPServer extends LanguageServer {
   var errorCode = 0
 
   val documentService = new RiddlLSPTextDocumentService()

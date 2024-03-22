@@ -7,7 +7,7 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import java.util
 import java.util.concurrent.CompletableFuture
 
-object RiddlLSPTextDocumentService extends TextDocumentService {
+class RiddlLSPTextDocumentService extends TextDocumentService {
 
   override def completion(position: CompletionParams):
     CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] = {
