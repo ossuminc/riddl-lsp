@@ -11,6 +11,7 @@ object V {
   val scopt = "4.1.0"
   val slf4j = "2.0.4"
   val lsp4j = "0.22.0"
+  val riddl = "0.39.0"
 }
 
 object Dep {
@@ -22,8 +23,10 @@ object Dep {
   val scopt = "com.github.scopt" %% "scopt" % V.scopt
   val slf4j = "org.slf4j" % "slf4j-nop" % V.slf4j
   val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % V.lsp4j
+  val riddlTestkit = "com.ossuminc" %% "riddl-testkit" % V.riddl
+  val riddlHugo = "com.ossuminc" %% "riddl-hugo" % V.riddl % "test"
 
-  val basic: Seq[ModuleID] = Seq(lang3, pureconfig, scalactic, scalatest, scalacheck, scopt, slf4j, lsp4j)
+  val basic: Seq[ModuleID] = Seq(lang3, pureconfig, scalactic, scalatest, scalacheck, scopt, slf4j, lsp4j, riddlTestkit)
 
   val testing: Seq[ModuleID] = Seq(scalactic % "test", scalatest % "test", scalacheck % "test")
 }
