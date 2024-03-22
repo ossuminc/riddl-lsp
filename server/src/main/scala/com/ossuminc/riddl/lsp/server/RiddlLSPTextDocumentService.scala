@@ -12,7 +12,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   override def completion(position: CompletionParams):
     CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] = {
     CompletableFuture.supplyAsync(() => {
-     List[CompletionItem].empty()
+     List[CompletionItem]()
     })
   }
   override def didOpen(params: DidOpenTextDocumentParams): Unit = ???

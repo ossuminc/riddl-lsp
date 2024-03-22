@@ -9,7 +9,7 @@ class RiddlLSPServer extends LanguageServer {
   var errorCode = 0
 
   val documentService = new RiddlLSPTextDocumentService()
-  val workspaceService = new RiddlLSPTextWorkspaceService()
+  val workspaceService = new RiddlLSPWorkspaceService()
 
   override def initialize(params: InitializeParams): CompletableFuture[InitializeResult] = {
     val result = new InitializeResult(new ServerCapabilities())
