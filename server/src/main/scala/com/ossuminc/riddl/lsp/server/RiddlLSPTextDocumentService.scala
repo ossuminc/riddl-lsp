@@ -11,11 +11,12 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
 
   override def completion(position: CompletionParams):
     CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] = {
-    CompletableFuture.supplyAsync(() => {
-      org.eclipse.lsp4j.jsonrpc.messages.Either.forLeft(
-        java.util.List.of()
-      )
-    })
+      CompletableFuture.supplyAsync(() => {
+        org.eclipse.lsp4j.jsonrpc.messages.Either.forLeft(
+          java.util.List.of()
+        )
+      }
+    )
   }
   override def didOpen(params: DidOpenTextDocumentParams): Unit = ???
 

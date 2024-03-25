@@ -7,3 +7,5 @@ addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.8.2")
 
 ThisBuild / libraryDependencySchemes +=
   "org.scala-lang.modules" %% "scala-xml" % "always"
+
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.11")

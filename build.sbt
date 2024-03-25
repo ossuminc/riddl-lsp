@@ -3,11 +3,11 @@ import com.ossuminc.sbt.helpers.RootProjectInfo.Keys.{
   gitHubOrganization,
   gitHubRepository
 }
-import org.scoverage.coveralls.Imports.CoverallsKeys.*
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++= Set(mainClass)
 Global / scalaVersion := "3.4.0"
+coverageEnabled := true
 
 enablePlugins(OssumIncPlugin)
 
@@ -54,4 +54,5 @@ lazy val plugin: Project = Module("plugin", "riddl-lsp-plugin")
     buildInfoObject := "RiddlLSPPluginBuildInfo",
     description := "The plugin for supporting RIDDL in IntelliJ",
     libraryDependencies ++= Dep.testing ++ Dep.basic
+
   )
