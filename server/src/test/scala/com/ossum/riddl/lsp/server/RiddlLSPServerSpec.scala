@@ -2,11 +2,10 @@ package com.ossum.riddl.lsp.server
 
 import com.ossuminc.riddl.lsp.server.{RiddlLSPServer, RiddlLSPTextDocumentService, RiddlLSPWorkspaceService}
 import com.ossuminc.riddl.lsp.utils.createInitializeResultIncremental
-import org.eclipse.lsp4j.{InitializeParams, InitializeResult, ServerCapabilities}
+import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.util.concurrent.CompletableFuture
 import scala.language.postfixOps
 
 class RiddlLSPServerSpec extends AnyWordSpec with Matchers {

@@ -1,4 +1,5 @@
 addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.8.2")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.11")
 
 // This enables sbt-bloop to create bloop config files for Metals editors
 // Uncomment locally if you use metals, otherwise don't slow down other
@@ -7,5 +8,3 @@ addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.8.2")
 
 ThisBuild / libraryDependencySchemes +=
   "org.scala-lang.modules" %% "scala-xml" % "always"
-
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.11")
