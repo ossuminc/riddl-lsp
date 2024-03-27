@@ -1,4 +1,4 @@
-import com.ossuminc.sbt.helpers.Publishing
+import com.ossuminc.sbt.helpers.SonatypePublishing
 import com.ossuminc.sbt.helpers.RootProjectInfo.Keys.{
   gitHubOrganization,
   gitHubRepository
@@ -11,7 +11,7 @@ Global / scalaVersion := "3.4.0"
 enablePlugins(OssumIncPlugin)
 
 lazy val riddl: Project = Root("", "riddl", startYr = 2024)
-  .configure(Publishing.configure, With.git, With.dynver)
+  .configure(SonatypePublishing.configure, With.git, With.dynver)
   .settings(
     gitHubRepository := "riddl-lsp",
     gitHubOrganization := "ossuminc",
