@@ -1,34 +1,23 @@
-import com.ossuminc.sbt.helpers.SonatypePublishing
-import com.ossuminc.sbt.helpers.RootProjectInfo.Keys.{
-  gitHubOrganization,
-  gitHubRepository
-}
-
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++= Set(mainClass)
 Global / scalaVersion := "3.4.0"
 
 enablePlugins(OssumIncPlugin)
 
-lazy val riddl: Project = Root("", "riddl", startYr = 2024)
-  .configure(SonatypePublishing.configure, With.git, With.dynver)
-  .settings(
-    gitHubRepository := "riddl-lsp",
-    gitHubOrganization := "ossuminc",
-    publish / skip := true
-  )
+lazy val riddl: Project = Root("riddl-lsp", "ossuminc", "com.ossuminc.riddl.lsp", startYr = 2024)
+  .configure(With.noPublishing, With.git, With.dynver)
   .aggregate(server, plugin)
 
 lazy val Server = config("server")
 lazy val server: Project = Module("server", "riddl-lsp-server")
-  .enablePlugins(OssumIncPlugin)
   .configure(
+    With.noPublishing,
     With.typical,
     With.build_info,
-    With.coverage(90) /*, With.native()*/
+    With.coverage(90)
   )
   .settings(
-    buildInfoPackage := "com.ossuminc.riddl.lsp.server",
+    buildInfoPackage := "com.orissuminc.riddl.lsp.server",
     buildInfoObject := "RiddlLSPServerBuildInfo",
     description := "The server for the LSP for RIDDL",
     libraryDependencies ++= Dep.testing ++ Dep.basic ++ Seq(
@@ -42,11 +31,11 @@ lazy val server: Project = Module("server", "riddl-lsp-server")
 
 lazy val Plugin = config("plugin")
 lazy val plugin: Project = Module("plugin", "riddl-lsp-plugin")
-  .enablePlugins(OssumIncPlugin)
   .configure(
+    With.noPublishing,
     With.typical,
     With.build_info,
-    With.coverage(90) /*, With.native()*/
+    With.coverage(90)
   )
   .settings(
     buildInfoPackage := "com.ossuminc.riddl.lsp.plugin",

@@ -23,7 +23,7 @@ object Dep {
   val scopt = "com.github.scopt" %% "scopt" % V.scopt
   val slf4j = "org.slf4j" % "slf4j-nop" % V.slf4j
   val lsp4j = "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % V.lsp4j
-  val riddlc = "com.ossuminc" %% "riddlx" % V.riddl
+  val riddlc = "com.ossuminc" %% "riddlc" % V.riddl
   val riddlTestkit = "com.ossuminc" %% "riddl-testkit" % V.riddl
   val riddlHugo = "com.ossuminc" %% "riddl-hugo" % V.riddl % "test"
 
