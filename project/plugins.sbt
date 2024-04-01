@@ -1,4 +1,5 @@
 addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.9.5")
+addSbtPlugin("com.ossuminc" % "sbt-riddl" % "0.42.0")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.11")
 
 // This enables sbt-bloop to create bloop config files for Metals editors

@@ -11,7 +11,7 @@ object V {
   val scopt = "4.1.0"
   val slf4j = "2.0.4"
   val lsp4j = "0.22.0"
-  val riddl = "0.40.0"
+  val riddl = "0.27.5"
 }
 
 object Dep {
