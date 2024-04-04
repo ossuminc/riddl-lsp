@@ -61,6 +61,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     riddlDoc = Some(params.getTextDocument.getText)
     docURI = Some(params.getTextDocument.getUri)
+    updateParsedDoc()
   }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
@@ -95,10 +96,12 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
       else docLines = Seq(changes.map(_.getText).mkString("\n"))
       docLines.mkString
     )
+    updateParsedDoc()
   }
 
   override def didClose(params: DidCloseTextDocumentParams): Unit = {
     riddlDoc = None
+    updateParsedDoc()
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
