@@ -31,10 +31,22 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   private var riddlDoc: Option[String] = None
   private var parsedDoc: Option[Either[Messages, AST.Root]] = None
 
-  def updateParsedDoc(fromURI: Boolean = true): Unit = {
-    if fromURI then parsedDoc = docURI.map(parseDocFromSource)
-    else parsedDoc = riddlDoc.map(parseDocFromString)
+  private def updateParsedDoc(fromURI: Boolean = true): Unit = {
+    if fromURI then parsedDoc = riddlDoc.map(parseDocFromString)
+    else parsedDoc = docURI.map(parseDocFromSource)
   }
+
+  private def updateRiddlDocFromURI(): Unit = docURI.foreach(uri => {
+    val source = io.Source.fromURL(uri)
+    lazy val data: String =
+      try {
+        source.mkString
+      }
+      finally {
+        source.close()
+      }
+    riddlDoc = if data.nonEmpty then Some(data) else None
+  })
 
   override def completion(position: CompletionParams):
     CompletableFuture[messages.Either[util.List[CompletionItem], CompletionList]] = {
@@ -45,10 +57,10 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
       }
     )
   }
+
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     riddlDoc = Some(params.getTextDocument.getText)
     docURI = Some(params.getTextDocument.getUri)
-    updateParsedDoc(false)
   }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
@@ -83,16 +95,14 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
       else docLines = Seq(changes.map(_.getText).mkString("\n"))
       docLines.mkString
     )
-
-    updateParsedDoc(false)
   }
 
   override def didClose(params: DidCloseTextDocumentParams): Unit = {
     riddlDoc = None
-    updateParsedDoc(false)
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
+    updateRiddlDocFromURI()
     updateParsedDoc()
   }
 }
