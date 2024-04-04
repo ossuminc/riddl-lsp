@@ -11,11 +11,15 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util
 import java.util.concurrent.CompletableFuture
+import scala.io.Source
 import scala.jdk.CollectionConverters.*
 
+def getRootFromUri(uri: String) = {
+  uri.split("/riddl/").drop(-1).mkString + "riddl/"
+}
+
 def parseDocFromSource(docURI: String): Either[Messages, AST.Root] = {
-  val riddlRootURI = docURI.split("/riddl/").drop(-1).mkString + "riddl/"
-  val riddlRootDoc = io.Source.fromURL(riddlRootURI)
+  val riddlRootDoc = io.Source.fromURL(docURI)
   new TopLevelParser(SourceParserInput(riddlRootDoc, docURI)).parseRoot()
 }
 
@@ -44,7 +48,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     riddlDoc = Some(params.getTextDocument.getText)
     docURI = Some(params.getTextDocument.getUri)
-    updateParsedDoc()
+    updateParsedDoc(false)
   }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
@@ -54,11 +58,10 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
       range.getEnd.getCharacter - range.getStart.getCharacter
     )
 
-    val changes: Seq[TextDocumentContentChangeEvent] = params.getContentChanges.asScala.toSeq
-
     riddlDoc = riddlDoc.map(doc =>
       var docLines: Seq[String] = doc.linesIterator.toSeq
-      changes.foreach(change => {
+      val changes = params.getContentChanges.asScala.toSeq
+      if docLines.nonEmpty then changes.foreach(change => {
         val changeRangeStart: Position = change.getRange.getStart
         val changeRangeEnd: Position = change.getRange.getEnd
         val changesToPatch: Seq[String] = docLines.slice(
@@ -66,17 +69,22 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
           changeRangeEnd.getLine
         )
         val changeLines = change.getText.linesIterator.toSeq
-        val startLinePatch: String = patchLine(docLines.head, changes.head.getRange, changeLines.head)
+        val startLinePatch: String = patchLine(docLines.head, change.getRange, changeLines.head)
         val middlePatch: Seq[String] = changeLines.slice(1, -1)
-        val endLinePatch: String = patchLine(docLines.last, changes.last.getRange, changeLines.last)
+        val endLinePatch: String = patchLine(docLines.last, change.getRange, changeLines.last)
+
+        val finalPatch = startLinePatch +: middlePatch :+ endLinePatch
         docLines = docLines.patch(
-          changeRangeStart.getLine,
+          changeRangeStart.getLine, //start of replacement
           startLinePatch +: middlePatch :+ endLinePatch,
-          changeRangeEnd.getLine - changeRangeStart.getLine
+          changeRangeEnd.getLine - changeRangeStart.getLine //length to replace (will be deleted)
         )
       })
+      else docLines = Seq(changes.map(_.getText).mkString("\n"))
       docLines.mkString
     )
+
+    updateParsedDoc(false)
   }
 
   override def didClose(params: DidCloseTextDocumentParams): Unit = {
@@ -85,6 +93,6 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
-    parsedDoc = parsedDoc.map(_ => parseDocFromSource(params.getTextDocument.getUri))
+    updateParsedDoc()
   }
 }
