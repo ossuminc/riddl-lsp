@@ -36,7 +36,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
     else parsedDoc = docURI.map(parseDocFromSource)
   }
 
-  private def updateRiddlDocFromURI(): Unit = docURI.foreach(uri => {
+  private def updateRIDDLDocFromURI(): Unit = docURI.foreach(uri => {
     val source = io.Source.fromURL(uri)
     lazy val data: String =
       try {
@@ -102,7 +102,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
-    updateRiddlDocFromURI()
+    updateRIDDLDocFromURI()
     updateParsedDoc()
   }
 }
