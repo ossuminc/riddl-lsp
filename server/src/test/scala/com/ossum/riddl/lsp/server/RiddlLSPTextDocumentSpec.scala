@@ -17,28 +17,37 @@ import org.eclipse.lsp4j.{
   TextDocumentItem,
   VersionedTextDocumentIdentifier
 }
+import org.scalatest.Succeeded
+import org.scalatest.concurrent.Futures.whenReady
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.nio.file.Path
 import java.util
+import java.util.concurrent.CompletableFuture
 import scala.io.{BufferedSource, Source}
 import scala.language.postfixOps
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
-class RiddlLSPTextDocumentSpec extends AnyWordSpec with Matchers {
-  trait EverythingFileSpec {
-    val filePath = "server/src/test/resources/everything.riddl"
+class RiddlLSPTextDocumentSpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaFutures {
+
+  trait OneErrorFileSpec {
+    val filePath = "server/src/test/resources/everythingOneError.riddl"
     val file: BufferedSource = Source.fromFile(filePath)
     val doc: String = file.getLines().mkString
     file.close()
     val docURI: String = Path.of(filePath).toUri.toString
   }
 
-  trait EverythingInitializeSpec extends EverythingFileSpec {
+  trait OneErrorInitializeSpec extends OneErrorFileSpec {
 
     val textDocumentItem: TextDocumentItem = new TextDocumentItem()
     textDocumentItem.setText(doc)
@@ -64,7 +73,7 @@ class RiddlLSPTextDocumentSpec extends AnyWordSpec with Matchers {
     val service: RiddlLSPTextDocumentService = RiddlLSPTextDocumentService()
   }
 
-  trait OpenEverythingFileSpec extends EverythingInitializeSpec {
+  trait OpenOneErrorFileSpec extends OneErrorInitializeSpec {
     val openNotification: DidOpenTextDocumentParams =
       new DidOpenTextDocumentParams()
     openNotification.setTextDocument(
@@ -84,7 +93,7 @@ class RiddlLSPTextDocumentSpec extends AnyWordSpec with Matchers {
     service.didOpen(openNotification)
   }
 
-  trait ChangeEverythingFileSpec extends OpenEverythingFileSpec {
+  trait ChangeOneErrorFileSpec extends OpenOneErrorFileSpec {
     val changeNotification: DidChangeTextDocumentParams =
       new DidChangeTextDocumentParams()
 
@@ -112,7 +121,7 @@ class RiddlLSPTextDocumentSpec extends AnyWordSpec with Matchers {
     service.didChange(changeNotification)
   }
 
-  trait ChangeEmptyFileSpec extends OpenEmptyFileSpec with EverythingFileSpec {
+  trait ChangeEmptyFileSpec extends OpenEmptyFileSpec with OneErrorFileSpec {
     val changeNotification: DidChangeTextDocumentParams =
       new DidChangeTextDocumentParams()
 
@@ -141,36 +150,36 @@ class RiddlLSPTextDocumentSpec extends AnyWordSpec with Matchers {
   }
 
   "RiddlLSPTextDocumentService" must {
-    "successfully open everything.riddl & get completion" in new OpenEverythingFileSpec {
+    "successfully open everythingOneError.riddl & get completion" in new OpenOneErrorFileSpec {
       val params = new CompletionParams()
       params.setTextDocument(textDocumentIdentifier)
       val position = new Position()
-      position.setLine(1)
-      position.setCharacter(0)
+      position.setLine(5)
+      position.setCharacter(7)
       params.setPosition(position)
-      val resultF
-          : Future[messages.Either[util.List[CompletionItem], CompletionList]] =
-        service.completion(params).asScala
-      resultF.map { eitherList =>
+
+      val resultF: CompletableFuture[
+        messages.Either[util.List[CompletionItem], CompletionList]
+      ] = service.completion(params)
+
+      whenReady(resultF.asScala) { eitherList =>
         eitherList.isRight mustBe true
-        eitherList.getRight.getItems
-          .get(
-            0
-          )
-          .getTextEditText mustEqual """"Expected one of ("/*" | "//" | "adaptor" | "by" | "command" | "connector" | "entity" | "event" | "flow" | "function" | "graph" | "handler" | "include" | "inlet" | "merge" | "option" | "outlet" | "projector" | "query" | "record" | "repository" | "result" | "router" | "saga" | "sink" | "source" | "split" | "table" | "term" | "type" | "void" | "}")""""
+        eitherList.getRight.getItems.asScala.length mustEqual 1
+        eitherList.getRight.getItems.asScala.head.getTextEditText mustEqual
+          """Expected one of (end-of-input | whitespace after keyword)"""
       }
     }
 
-    "successfully close everything.riddl" in new OpenEverythingFileSpec {
+    "successfully close everythingOneError.riddl" in new OpenOneErrorFileSpec {
       val closeNotification: DidCloseTextDocumentParams =
         new DidCloseTextDocumentParams()
       closeNotification.setTextDocument(textDocumentIdentifier)
       service.didClose(closeNotification)
     }
 
-    "successfully change everything.riddl" in new ChangeEverythingFileSpec {}
+    "successfully change everythingOneError.riddl" in new ChangeOneErrorFileSpec {}
 
-    "successfully save everything.riddl" in new ChangeEverythingFileSpec {
+    "successfully save everythingOneError.riddl" in new ChangeOneErrorFileSpec {
       val saveNotification = new DidSaveTextDocumentParams()
       saveNotification.setTextDocument(textDocumentIdentifier)
       service.didSave(saveNotification)

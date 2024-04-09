@@ -56,8 +56,8 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
       else Seq()
   }
 
-  private def updateParsedDoc(fromURI: Boolean = true): Unit = {
-    if fromURI then docAST = riddlDoc.map(parseDocFromString)
+  private def updateParsedDoc(fromString: Boolean = false): Unit = {
+    if fromString then docAST = riddlDoc.map(parseDocFromString)
     else docAST = docURI.map(parseDocFromSource)
 
     updateDocLines()
@@ -83,67 +83,61 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
         parseDocFromSource(position.getTextDocument.getUri)
       else docAST.getOrElse(Right(AST.Root()))
 
-    if ast.isRight
-    then
+    if ast.isRight then
       Future.failed(UnavailableResourceException()).asJava.toCompletableFuture
     else {
-      val completionsOpt = getCompletionFromAST(
-        position.getPosition.getLine,
-        position.getPosition.getCharacter
-      )
-      if completionsOpt.isDefined then
-        Future
-          .successful(
-            completionsOpt.getOrElse(messages.Either.forLeft(Seq().asJava))
+      ast match {
+        case Left(msgs) =>
+          val completionsOpt = getCompletionFromAST(
+            msgs,
+            position.getPosition.getLine,
+            position.getPosition.getCharacter
           )
-          .asJava
-          .toCompletableFuture
-      else Future.failed(Throwable()).asJava.toCompletableFuture
+          if completionsOpt.isDefined then
+            Future
+              .successful(
+                completionsOpt.getOrElse(messages.Either.forLeft(Seq().asJava))
+              )
+              .asJava
+              .toCompletableFuture
+          else Future.failed(Throwable()).asJava.toCompletableFuture
+        case _ => Future.failed(Throwable()).asJava.toCompletableFuture
+      }
     }
   }
 
   private def getCompletionFromAST(
+      msgs: List[Messages.Message],
       line: Int,
       charPosition: Int
   ): Option[messages.Either[util.List[CompletionItem], CompletionList]] = {
     var completions = CompletionList()
-    if docAST.isDefined then
-      if docAST.exists(_.isRight) then None
-      else {
-        docAST.map(
-          _.fold(
-            msgs => {
-              val completionList = new CompletionList()
-              val grouped = msgs
-                .groupBy(msg => msg.loc.line)
-              val lineItems =
-                if grouped.isDefinedAt(line) then Some(grouped(line)) else None
-              val selectedItem: Seq[Messages.Message] =
-                lineItems
-                  .map { items =>
-                    val filtered = items.filterNot(_.loc.offset == charPosition)
-                    if filtered.nonEmpty then filtered else Seq()
-                  }
-                  .getOrElse(Seq())
+    val completionList = new CompletionList()
+    val grouped = msgs.groupBy(msg => msg.loc.line)
+    val lineItems =
+      if grouped.isDefinedAt(line) then Some(grouped(line)) else None
+    val selectedItem: Seq[Messages.Message] =
+      lineItems
+        .map { items =>
+          val filtered = items.filterNot(_.loc.offset == charPosition)
+          if filtered.nonEmpty then filtered else Seq()
+        }
+        .getOrElse(Seq())
 
-              completionList.setItems(
-                selectedItem
-                  .map(msg => {
-                    val item = new CompletionItem()
-                    item.setTextEditText(msg.message)
-                    item
-                  })
-                  .asJava
-              )
-              messages.Either.forRight(
-                completionList
-              )
-            },
-            _ => messages.Either.forLeft(Seq[CompletionItem]().asJava)
-          )
-        )
-      }
-    else None
+    completionList.setItems(
+      selectedItem
+        .map(msg => {
+          val item = new CompletionItem()
+          item.setTextEditText(msg.message)
+          item
+        })
+        .asJava
+    )
+    Some(
+      messages.Either.forRight(
+        completionList
+      )
+    )
   }
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
