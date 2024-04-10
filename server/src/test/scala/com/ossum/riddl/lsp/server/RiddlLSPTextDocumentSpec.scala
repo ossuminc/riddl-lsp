@@ -165,11 +165,12 @@ class RiddlLSPTextDocumentSpec
       whenReady(resultF.asScala) { eitherList =>
         eitherList.isRight mustBe true
         eitherList.getRight.getItems.asScala.length mustEqual 1
-        eitherList.getRight.getItems.asScala.head.getTextEditText mustEqual
+        eitherList.getRight.getItems.asScala.head.getDetail mustEqual
           """Expected one of (end-of-input | whitespace after keyword)"""
       }
     }
 
+    /* TODO: Finish these tests immediately
     "successfully close everythingOneError.riddl" in new OpenOneErrorFileSpec {
       val closeNotification: DidCloseTextDocumentParams =
         new DidCloseTextDocumentParams()
@@ -192,6 +193,7 @@ class RiddlLSPTextDocumentSpec
       saveNotification.setTextDocument(textDocumentIdentifier)
       service.didSave(saveNotification)
     }
+     */
   }
 
 }

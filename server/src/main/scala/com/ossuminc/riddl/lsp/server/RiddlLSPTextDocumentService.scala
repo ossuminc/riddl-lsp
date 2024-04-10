@@ -3,7 +3,7 @@ package com.ossuminc.riddl.lsp.server
 import com.ossuminc.riddl.language.{AST, Messages}
 import com.ossuminc.riddl.language.Messages.Messages
 import com.ossuminc.riddl.language.parsing.{
-  SourceParserInput,
+  RiddlParserInput,
   StringParserInput,
   TopLevelParser
 }
@@ -12,7 +12,6 @@ import org.eclipse.lsp4j
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{
   CompletionItem,
-  CompletionItemKind,
   CompletionList,
   CompletionParams,
   DidChangeTextDocumentParams,
@@ -37,8 +36,8 @@ def getRootFromUri(uri: String) = {
 }
 
 def parseDocFromSource(docURI: String): Either[Messages, AST.Root] = {
-  val riddlRootDoc = io.Source.fromURL(docURI)
-  new TopLevelParser(SourceParserInput(riddlRootDoc, docURI)).parseRoot()
+  val riddlRootDoc = java.net.URI.create(docURI).toURL
+  new TopLevelParser(RiddlParserInput(riddlRootDoc)).parseRoot()
 }
 
 def parseDocFromString(docString: String): Either[Messages, AST.Root] =
@@ -139,7 +138,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
 
   private def msgToCompletion(msg: Messages.Message): CompletionItem = {
     val item = new CompletionItem()
-    item.setTextEditText(msg.message)
+    item.setDetail(msg.message)
     item
   }
 
