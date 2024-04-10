@@ -12,6 +12,7 @@ import org.eclipse.lsp4j
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{
   CompletionItem,
+  CompletionItemKind,
   CompletionList,
   CompletionParams,
   DidChangeTextDocumentParams,
@@ -56,9 +57,9 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
       else Seq()
   }
 
-  private def updateParsedDoc(fromString: Boolean = false): Unit = {
-    if fromString then docAST = riddlDoc.map(parseDocFromString)
-    else docAST = docURI.map(parseDocFromSource)
+  private def updateParsedDoc(fromURL: Boolean = true): Unit = {
+    if fromURL then docAST = docURI.map(parseDocFromSource)
+    else docAST = riddlDoc.map(parseDocFromString)
 
     updateDocLines()
   }
@@ -126,11 +127,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
 
     completionList.setItems(
       selectedItem
-        .map(msg => {
-          val item = new CompletionItem()
-          item.setTextEditText(msg.message)
-          item
-        })
+        .map(msgToCompletion)
         .asJava
     )
     Some(
@@ -138,6 +135,12 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
         completionList
       )
     )
+  }
+
+  private def msgToCompletion(msg: Messages.Message): CompletionItem = {
+    val item = new CompletionItem()
+    item.setTextEditText(msg.message)
+    item
   }
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
