@@ -21,6 +21,7 @@ import org.scalatest.Succeeded
 import org.scalatest.concurrent.Futures.whenReady
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.nio.file.Path
@@ -33,6 +34,7 @@ import scala.jdk.FutureConverters.*
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
+import scala.xml.include.UnavailableResourceException
 
 class RiddlLSPTextDocumentSpec
     extends AnyWordSpec
@@ -170,14 +172,28 @@ class RiddlLSPTextDocumentSpec
       }
     }
 
-    /* TODO: Finish these tests immediately
     "successfully close everythingOneError.riddl" in new OpenOneErrorFileSpec {
       val closeNotification: DidCloseTextDocumentParams =
         new DidCloseTextDocumentParams()
       closeNotification.setTextDocument(textDocumentIdentifier)
       service.didClose(closeNotification)
+
+      val params = new CompletionParams()
+      params.setTextDocument(textDocumentIdentifier)
+      val position = new Position()
+      position.setLine(1)
+      position.setCharacter(1)
+      params.setPosition(position)
+
+      val resultF: CompletableFuture[
+        messages.Either[util.List[CompletionItem], CompletionList]
+      ] = service.completion(params)
+
+      // yields failure because file is closed so doc is not accessible
+      resultF.asScala.failed.futureValue mustBe a[UnavailableResourceException]
     }
 
+    /* TODO: Finish these tests immediately
     "successfully change everythingOneError.riddl" in new ChangeOneErrorFileSpec {}
 
     "successfully save everythingOneError.riddl" in new ChangeOneErrorFileSpec {

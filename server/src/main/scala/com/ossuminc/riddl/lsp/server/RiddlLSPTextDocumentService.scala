@@ -188,7 +188,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
 
   override def didClose(params: DidCloseTextDocumentParams): Unit = {
     riddlDoc = None
-    updateParsedDoc()
+    updateParsedDoc(false)
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
