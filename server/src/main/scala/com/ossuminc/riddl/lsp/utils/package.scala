@@ -1,6 +1,17 @@
 package com.ossuminc.riddl.lsp
 
-import org.eclipse.lsp4j.{CompletionOptions, InitializeResult, ServerCapabilities, TextDocumentSyncKind}
+import org.eclipse.lsp4j.{
+  CompletionOptions,
+  InitializeResult,
+  ServerCapabilities,
+  TextDocumentSyncKind
+}
+
+import java.util.concurrent.CompletableFuture
+import scala.concurrent.Future
+import scala.jdk.CollectionConverters.*
+import scala.jdk.FutureConverters.*
+import scala.language.implicitConversions
 
 package object utils {
   def createInitializeResultIncremental(): InitializeResult = {
@@ -10,4 +21,12 @@ package object utils {
     result.getCapabilities.setCompletionProvider(new CompletionOptions())
     result
   }
+
+  def completableFutureWithResult[R](result: R): CompletableFuture[R] =
+    Future.successful(result).asJava.toCompletableFuture
+
+  def completableFutureWithSeq[S](
+      result: Seq[S]
+  ): CompletableFuture[java.util.List[_ <: S]] =
+    completableFutureWithResult(result.asJava)
 }
