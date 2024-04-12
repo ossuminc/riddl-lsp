@@ -14,6 +14,15 @@ import scala.jdk.FutureConverters.*
 import scala.language.implicitConversions
 
 package object utils {
+  def parseFromURI(uri: String): String = {
+    val source = io.Source.fromURL(uri)
+    try {
+      source.getLines().mkString("\n")
+    } finally {
+      source.close()
+    }
+  }
+
   def createInitializeResultIncremental(): InitializeResult = {
     val result = new InitializeResult(new ServerCapabilities())
 
