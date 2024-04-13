@@ -1,7 +1,7 @@
 [![Code Build Status](https://github.com/ossuminc/riddl-lsp/actions/workflows/build.yaml/badge.svg)](https://github.com/ossuminc/riddl-lsp/actions/workflows/build.yaml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/ossuminc/riddl/badge.svg?branch=main)](https://coveralls.io/github/ossuminc/riddl-lsp?branch=main)
 [![CLA assistant](https://cla-assistant.io/readme/badge/ossuminc/riddl-lsp)](https://cla-assistant.io/ossuminc/riddl-lsp)
-[![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://raw.githubusercontent.com/ossuminc/riddl/master/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202-blue.svg)]([https://raw.githubusercontent.com/ossuminc/riddl/master/LICENSE)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ossuminc_riddl-lsp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ossuminc_riddl-lsp)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=ossuminc_riddl-lsp&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=ossuminc_riddl-lsp)
