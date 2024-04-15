@@ -1,170 +1,128 @@
 package com.ossum.riddl.lsp.server
 
-import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService
+import com.ossum.riddl.lsp.server.InitializationSpecs.*
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{
   CompletionItem,
   CompletionList,
   CompletionParams,
-  DidChangeTextDocumentParams,
   DidCloseTextDocumentParams,
-  DidOpenTextDocumentParams,
-  DidSaveTextDocumentParams,
-  Position,
-  TextDocumentContentChangeEvent,
-  TextDocumentIdentifier,
-  TextDocumentItem,
-  VersionedTextDocumentIdentifier
+  DocumentDiagnosticParams,
+  DocumentDiagnosticReport,
+  DocumentDiagnosticReportKind,
+  Position
 }
-import org.scalatest.Succeeded
 import org.scalatest.concurrent.Futures.whenReady
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
-import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.nio.file.Path
 import java.util
 import java.util.concurrent.CompletableFuture
-import scala.io.{BufferedSource, Source}
+import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
-import scala.xml.include.UnavailableResourceException
 
 class RiddlLSPTextDocumentSpec
     extends AnyWordSpec
     with Matchers
     with ScalaFutures {
 
-  trait OneErrorFileSpec {
-    val filePath = "server/src/test/resources/everythingOneError.riddl"
-    val file: BufferedSource = Source.fromFile(filePath)
-    val doc: String = file.getLines().mkString
-    file.close()
-    val docURI: String = Path.of(filePath).toUri.toString
+  trait DiagnosticRequestSpec extends DocumentIdentifierSpec {
+    val request = new DocumentDiagnosticParams(textDocumentIdentifier)
+
+    val diagnosticResultF: CompletableFuture[DocumentDiagnosticReport] =
+      service.diagnostic(request)
   }
 
-  trait OneErrorInitializeSpec extends OneErrorFileSpec {
+  trait CompletionRequestSpec extends DocumentIdentifierSpec {
 
-    val textDocumentItem: TextDocumentItem = new TextDocumentItem()
-    textDocumentItem.setText(doc)
-    textDocumentItem.setUri(docURI)
-    val textDocumentIdentifier: TextDocumentIdentifier =
-      new TextDocumentIdentifier()
-    textDocumentIdentifier.setUri(docURI)
+    var completionResultF: CompletableFuture[
+      messages.Either[util.List[CompletionItem], CompletionList]
+    ] = Future.failed(new Throwable()).asJava.toCompletableFuture
+    def makeRequest(): Unit = {
+      params.setPosition(position)
 
-    val service: RiddlLSPTextDocumentService = RiddlLSPTextDocumentService()
-  }
+      completionResultF = service.completion(params)
+    }
 
-  trait EmptyInitializeSpec {
-    val emptyDocURI: String =
-      Path.of("server/src/test/resources/empty.riddl").toUri.toString
+    val params = new CompletionParams()
+    params.setTextDocument(textDocumentIdentifier)
+    val position = new Position()
 
-    val textDocumentItem: TextDocumentItem = new TextDocumentItem()
-    textDocumentItem.setText("")
-    textDocumentItem.setUri(emptyDocURI)
-    val textDocumentIdentifier: TextDocumentIdentifier =
-      new TextDocumentIdentifier()
-    textDocumentIdentifier.setUri(emptyDocURI)
-
-    val service: RiddlLSPTextDocumentService = RiddlLSPTextDocumentService()
-  }
-
-  trait OpenOneErrorFileSpec extends OneErrorInitializeSpec {
-    val openNotification: DidOpenTextDocumentParams =
-      new DidOpenTextDocumentParams()
-    openNotification.setTextDocument(
-      textDocumentItem
-    )
-
-    service.didOpen(openNotification)
-  }
-
-  trait OpenEmptyFileSpec extends EmptyInitializeSpec {
-    val openNotification: DidOpenTextDocumentParams =
-      new DidOpenTextDocumentParams()
-    openNotification.setTextDocument(
-      textDocumentItem
-    )
-
-    service.didOpen(openNotification)
-  }
-
-  trait ChangeOneErrorFileSpec extends OpenOneErrorFileSpec {
-    val changeNotification: DidChangeTextDocumentParams =
-      new DidChangeTextDocumentParams()
-
-    val versionedDocIdentifier = new VersionedTextDocumentIdentifier()
-    versionedDocIdentifier.setUri(docURI)
-    changeNotification.setTextDocument(versionedDocIdentifier)
-
-    val changes = new TextDocumentContentChangeEvent()
-    changes.setText("the")
-    val changeRange = new lsp4j.Range()
-
-    val changeStart = new Position()
-    changeStart.setLine(11)
-    changeStart.setCharacter(21)
-    changeRange.setStart(changeStart)
-
-    val changeEnd = new Position()
-    changeEnd.setLine(11)
-    changeEnd.setCharacter(24)
-    changeRange.setEnd(changeEnd)
-
-    changes.setRange(changeRange)
-    changeNotification.setContentChanges(List(changes).asJava)
-
-    service.didChange(changeNotification)
-  }
-
-  trait ChangeEmptyFileSpec extends OpenEmptyFileSpec with OneErrorFileSpec {
-    val changeNotification: DidChangeTextDocumentParams =
-      new DidChangeTextDocumentParams()
-
-    val versionedDocIdentifier = new VersionedTextDocumentIdentifier()
-    versionedDocIdentifier.setUri(docURI)
-    changeNotification.setTextDocument(versionedDocIdentifier)
-
-    val changes = new TextDocumentContentChangeEvent()
-    changes.setText("domain New {}")
-    val changeRange = new lsp4j.Range()
-
-    val changeStart = new Position()
-    changeStart.setLine(1)
-    changeStart.setCharacter(1)
-    changeRange.setStart(changeStart)
-
-    val changeEnd = new Position()
-    changeEnd.setLine(1)
-    changeEnd.setCharacter(1)
-    changeRange.setEnd(changeEnd)
-
-    changes.setRange(changeRange)
-    changeNotification.setContentChanges(List(changes).asJava)
-
-    service.didChange(changeNotification)
   }
 
   "RiddlLSPTextDocumentService" must {
-    "successfully open everythingOneError.riddl & get completion" in new OpenOneErrorFileSpec {
-      val params = new CompletionParams()
-      params.setTextDocument(textDocumentIdentifier)
-      val position = new Position()
-      position.setLine(5)
-      position.setCharacter(7)
-      params.setPosition(position)
+    "successfully open everything.riddl, failing to retrieve a completion" in new OpenNoErrorFileSpec
+      with CompletionRequestSpec
+      with DiagnosticRequestSpec {
+      position.setLine(1)
+      position.setCharacter(1)
+      makeRequest()
 
-      val resultF: CompletableFuture[
-        messages.Either[util.List[CompletionItem], CompletionList]
-      ] = service.completion(params)
+      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+    }
 
-      whenReady(resultF.asScala) { eitherList =>
+    "successfully open everythingOneError.riddl, retrieving a completion" in new OpenOneErrorFileSpec
+      with CompletionRequestSpec {
+
+      position.setLine(errorLine)
+      position.setCharacter(errorCharOnLine)
+      makeRequest()
+
+      whenReady(completionResultF.asScala) { completion =>
+        completion.isRight mustBe true
+        completion.getRight.getItems.asScala.length mustEqual 1
+        completion.getRight.getItems.asScala.head.getDetail mustEqual "Expected one of (end-of-input | whitespace after keyword)"
+      }
+    }
+
+    "successfully open empty.riddl, failing to retrieve a completion" in new OpenEmptyFileSpec
+      with CompletionRequestSpec {
+
+      position.setLine(1)
+      position.setCharacter(1)
+      makeRequest()
+
+      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is empty"
+    }
+
+    "successfully close everythingOneError.riddl, failing to retrieve a completion" in new OpenOneErrorFileSpec
+      with CompletionRequestSpec {
+      val closeNotification: DidCloseTextDocumentParams =
+        new DidCloseTextDocumentParams()
+      closeNotification.setTextDocument(textDocumentIdentifier)
+      service.didClose(closeNotification)
+
+      position.setLine(1)
+      position.setCharacter(1)
+      makeRequest()
+
+      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is closed"
+    }
+
+    "fail for completion error from a file with no errors" in new OpenNoErrorFileSpec
+      with CompletionRequestSpec {
+      position.setLine(1)
+      position.setCharacter(1)
+      makeRequest()
+
+      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+    }
+
+    "fail for completion from a file with an error" in new OpenOneErrorFileSpec
+      with CompletionRequestSpec {
+      position.setLine(errorLine)
+      position.setCharacter(errorCharOnLine)
+      makeRequest()
+
+      whenReady(completionResultF.asScala) { eitherList =>
         eitherList.isRight mustBe true
         eitherList.getRight.getItems.asScala.length mustEqual 1
         eitherList.getRight.getItems.asScala.head.getDetail mustEqual
@@ -172,25 +130,23 @@ class RiddlLSPTextDocumentSpec
       }
     }
 
-    "successfully close everythingOneError.riddl" in new OpenOneErrorFileSpec {
-      val closeNotification: DidCloseTextDocumentParams =
-        new DidCloseTextDocumentParams()
-      closeNotification.setTextDocument(textDocumentIdentifier)
-      service.didClose(closeNotification)
+    "fail requesting for diagnostic from file with no errors" in new OpenNoErrorFileSpec
+      with DiagnosticRequestSpec {
 
-      val params = new CompletionParams()
-      params.setTextDocument(textDocumentIdentifier)
-      val position = new Position()
-      position.setLine(1)
-      position.setCharacter(1)
-      params.setPosition(position)
+      diagnosticResultF.asScala.failed.futureValue mustBe a[Throwable]
+      diagnosticResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+    }
 
-      val resultF: CompletableFuture[
-        messages.Either[util.List[CompletionItem], CompletionList]
-      ] = service.completion(params)
+    "succeed requesting for diagnostic from file with one error" in new OpenOneErrorFileSpec
+      with DiagnosticRequestSpec {
 
-      // yields failure because file is closed so doc is not accessible
-      resultF.asScala.failed.futureValue mustBe a[UnavailableResourceException]
+      whenReady(diagnosticResultF.asScala) { report =>
+        report.getRelatedFullDocumentDiagnosticReport.getKind mustEqual DocumentDiagnosticReportKind.Full
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.length mustEqual 1
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getMessage mustEqual "Expected one of (end-of-input | whitespace after keyword)"
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getLine mustEqual errorLine
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getCharacter mustEqual errorCharOnLine
+      }
     }
 
     /* TODO: Finish these tests immediately
