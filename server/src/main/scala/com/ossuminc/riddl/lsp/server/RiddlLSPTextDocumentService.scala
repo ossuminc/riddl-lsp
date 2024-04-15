@@ -7,23 +7,7 @@ import com.ossuminc.riddl.lsp.utils.implicits.*
 import com.ossuminc.riddl.lsp.utils.parseFromURI
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.jsonrpc.messages
-import org.eclipse.lsp4j.{
-  CompletionItem,
-  CompletionList,
-  CompletionParams,
-  Diagnostic,
-  DiagnosticRelatedInformation,
-  DiagnosticSeverity,
-  DidChangeTextDocumentParams,
-  DidCloseTextDocumentParams,
-  DidOpenTextDocumentParams,
-  DidSaveTextDocumentParams,
-  DocumentDiagnosticParams,
-  DocumentDiagnosticReport,
-  Location,
-  Position,
-  RelatedFullDocumentDiagnosticReport
-}
+import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.services.TextDocumentService
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -72,7 +56,9 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
     updateDocLines()
   }
 
-  private def updateRIDDLDocFromURI(): Unit = docURI.foreach { uri =>
+  private def updateRIDDLDocFromURI(
+      uri: String = docURI.getOrElse("")
+  ): Unit = {
     val data = parseFromURI(uri)
     riddlDoc = if data.nonEmpty then Some(data) else None
   }
@@ -149,7 +135,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
     val selectedItem: Seq[Messages.Message] =
       lineItems
         .map { items =>
-          val filtered = items.filterNot(_.loc.offset == charPosition)
+          val filtered = items.filter(_.loc.col == charPosition)
           if filtered.nonEmpty then filtered else Seq()
         }
         .getOrElse(Seq())
@@ -225,7 +211,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
-    updateRIDDLDocFromURI()
+    updateRIDDLDocFromURI(params.getTextDocument.getUri)
     updateParsedDoc()
   }
 

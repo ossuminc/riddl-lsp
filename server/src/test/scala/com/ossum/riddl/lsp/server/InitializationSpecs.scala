@@ -1,15 +1,7 @@
 package com.ossum.riddl.lsp
 
 import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService
-import org.eclipse.lsp4j.{
-  DidChangeTextDocumentParams,
-  DidOpenTextDocumentParams,
-  Position,
-  TextDocumentContentChangeEvent,
-  TextDocumentIdentifier,
-  TextDocumentItem,
-  VersionedTextDocumentIdentifier
-}
+import org.eclipse.lsp4j.*
 
 import java.nio.file.Path
 import scala.collection.immutable.List
@@ -73,13 +65,15 @@ package server {
     }
 
     trait EmptyInitializeSpec extends DocumentIdentifierSpec {
-      val emptyDocURI: String =
-        Path.of("server/src/test/resources/empty.riddl").toUri.toString
+      val emptyDocURI = "server/src/test/resources/empty.riddl"
+
+      val emptyDocURIFromPath: String =
+        Path.of(emptyDocURI).toUri.toString
 
       val textDocumentItem: TextDocumentItem = new TextDocumentItem()
       textDocumentItem.setText("")
-      textDocumentItem.setUri(emptyDocURI)
-      textDocumentIdentifier.setUri(emptyDocURI)
+      textDocumentItem.setUri(emptyDocURIFromPath)
+      textDocumentIdentifier.setUri(emptyDocURIFromPath)
     }
 
     trait OpenNoErrorFileSpec extends NoErrorInitializeSpec {
@@ -140,7 +134,9 @@ package server {
       service.didChange(changeNotification)
     }
 
-    trait ChangeEmptyFileSpec extends OpenEmptyFileSpec with NonEmptyFileSpec {
+    trait ChangeEmptyFileSpec extends OpenEmptyFileSpec {
+      val textChange = "domain New {}"
+
       val changeNotification: DidChangeTextDocumentParams =
         new DidChangeTextDocumentParams()
 
@@ -149,7 +145,7 @@ package server {
       changeNotification.setTextDocument(versionedDocIdentifier)
 
       val changes = new TextDocumentContentChangeEvent()
-      changes.setText("domain New {}")
+      changes.setText(textChange)
       val changeRange = new lsp4j.Range()
 
       val changeStart = new Position()
