@@ -153,7 +153,7 @@ class RiddlLSPTextDocumentSpec
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
     }
 
-    "successfully change empty.riddl, expecting 2 errors" in new ChangeEmptyFileSpec
+    "successfully change empty.riddl, expecting an error" in new ChangeEmptyFileSpec
       with CompletionRequestSpec {
       position.setLine(errorLine)
       position.setCharacter(errorLineChar)
