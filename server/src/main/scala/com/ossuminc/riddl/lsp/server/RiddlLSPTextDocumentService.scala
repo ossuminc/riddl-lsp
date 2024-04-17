@@ -169,7 +169,7 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
     def patchLine(line: String, range: lsp4j.Range, text: String) = line.patch(
-      range.getStart.getCharacter,
+      range.getStart.getCharacter - 1,
       text,
       range.getEnd.getCharacter - range.getStart.getCharacter
     )
@@ -182,27 +182,31 @@ class RiddlLSPTextDocumentService extends TextDocumentService {
           val changeRangeStart: Position = change.getRange.getStart
           val changeRangeEnd: Position = change.getRange.getEnd
           val changesToPatch: Seq[String] = docLines.slice(
-            changeRangeStart.getLine,
+            changeRangeStart.getLine - 1,
             changeRangeEnd.getLine
           )
           val changeLines = change.getText.getLinesFromText
           val startLinePatch: String =
-            patchLine(docLines.head, change.getRange, changeLines.head)
-          val middlePatch: Seq[String] = changeLines.slice(1, -1)
-          val endLinePatch: String =
-            patchLine(docLines.last, change.getRange, changeLines.last)
+            patchLine(changesToPatch.head, change.getRange, changeLines.head)
+          val middlePatch: Seq[String] =
+            if changeRangeEnd.getLine - changeRangeStart.getLine < 1 then
+              changesToPatch.slice(
+                1,
+                changeRangeEnd.getLine
+              )
+            else Seq()
 
-          val finalPatch = startLinePatch +: middlePatch :+ endLinePatch
+          val finalPatch = startLinePatch +: middlePatch
           docLines = docLines.patch(
-            changeRangeStart.getLine, // start of replacement
-            startLinePatch +: middlePatch :+ endLinePatch,
-            changeRangeEnd.getLine - changeRangeStart.getLine // length to replace (will be deleted)
+            changeRangeStart.getLine - 1, // start of replacement
+            finalPatch,
+            changeRangeEnd.getLine - changeRangeStart.getLine + 1 // length to replace (will be deleted)
           )
         }
-      else docLines = Seq(changes.map(_.getText).mkString("\n"))
-      docLines.mkString
+      else docLines = changes.map(_.getText)
+      docLines.mkString("\n")
     )
-    updateParsedDoc()
+    updateParsedDoc(false)
   }
 
   override def didClose(params: DidCloseTextDocumentParams): Unit = {
