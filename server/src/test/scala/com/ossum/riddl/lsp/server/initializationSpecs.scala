@@ -1,6 +1,6 @@
 package com.ossum.riddl.lsp
 
-import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService
+import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.RiddlLSPTextDocumentService
 import org.eclipse.lsp4j.*
 
 import java.nio.file.Path
@@ -14,7 +14,7 @@ package server {
 
   import com.ossuminc.riddl.lsp.utils.parseFromURI
 
-  object InitializationSpecs {
+  object initializationSpecs {
     trait DocumentIdentifierSpec {
       val textDocumentIdentifier: TextDocumentIdentifier =
         new TextDocumentIdentifier()

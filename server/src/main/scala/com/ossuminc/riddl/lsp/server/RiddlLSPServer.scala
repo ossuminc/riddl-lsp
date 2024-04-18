@@ -1,5 +1,6 @@
 package com.ossuminc.riddl.lsp.server
 
+import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.RiddlLSPTextDocumentService
 import com.ossuminc.riddl.lsp.utils.createInitializeResultIncremental
 import org.eclipse.lsp4j.{CompletionOptions, InitializeParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind}
 import org.eclipse.lsp4j.services.{LanguageServer, TextDocumentService, WorkspaceService}

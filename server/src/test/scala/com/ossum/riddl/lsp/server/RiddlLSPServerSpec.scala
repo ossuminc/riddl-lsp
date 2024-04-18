@@ -1,6 +1,7 @@
 package com.ossum.riddl.lsp.server
 
-import com.ossuminc.riddl.lsp.server.{RiddlLSPServer, RiddlLSPTextDocumentService, RiddlLSPWorkspaceService}
+import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.RiddlLSPTextDocumentService
+import com.ossuminc.riddl.lsp.server.{RiddlLSPServer, RiddlLSPWorkspaceService}
 import com.ossuminc.riddl.lsp.utils.createInitializeResultIncremental
 import org.eclipse.lsp4j.{InitializeParams, InitializeResult}
 import org.scalatest.matchers.must.Matchers
