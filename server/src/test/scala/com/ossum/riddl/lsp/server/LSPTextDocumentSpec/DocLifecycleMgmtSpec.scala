@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
-import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class DocLifecycleMgmtSpec
     extends AnyWordSpec
@@ -77,20 +77,50 @@ class DocLifecycleMgmtSpec
       }
     }
 
-    /* TODO: Finish these tests immediately
-    "successfully change everythingOneError.riddl" in new ChangeOneErrorFileSpec {}
+    "fail requesting for diagnostic from file with no errors" in new OpenNoErrorFileSpec
+      with DiagnosticRequestSpec {
 
-    "successfully save everythingOneError.riddl" in new ChangeOneErrorFileSpec {
-      val saveNotification = new DidSaveTextDocumentParams()
-      saveNotification.setTextDocument(textDocumentIdentifier)
-      service.didSave(saveNotification)
+      diagnosticResultF.asScala.failed.futureValue mustBe a[Throwable]
+      diagnosticResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
     }
 
-    "successfully change empty.riddl" in new ChangeEmptyFileSpec {}
+    "succeed requesting for diagnostic from file with one error" in new OpenOneErrorFileSpec
+      with DiagnosticRequestSpec {
 
-     */
+      whenReady(diagnosticResultF.asScala) { report =>
+        report.getRelatedFullDocumentDiagnosticReport.getKind mustEqual DocumentDiagnosticReportKind.Full
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.length mustEqual 1
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getMessage mustEqual "Expected one of (end-of-input | whitespace after keyword)"
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getLine mustEqual errorLine
+        report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getCharacter mustEqual errorCharOnLine
+      }
+    }
 
-    "successfully save empty.riddl" in new ChangeEmptyFileSpec
+    "successfully change everythingOneError.riddl, fixing the error" in new ChangeOneErrorFileSpec
+      with CompletionRequestSpec {
+      position.setLine(errorLine)
+      position.setCharacter(errorCharOnLine)
+      requestCompletion()
+
+      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+    }
+
+    "successfully change empty.riddl, expecting an error" in new ChangeEmptyFileSpec
+      with CompletionRequestSpec {
+      position.setLine(errorLine)
+      position.setCharacter(errorLineChar)
+      requestCompletion()
+
+      whenReady(completionResultF.asScala) { completionList =>
+        completionList.isRight mustBe true
+        completionList.getRight.getItems.asScala.length mustEqual 1
+        completionList.getRight.getItems.asScala.head.getDetail mustEqual
+          """Expected one of (end-of-input | whitespace after keyword)"""
+      }
+    }
+
+    "successfully save empty.riddl" in new OpenEmptyFileSpec
       with CompletionRequestSpec
       with DiagnosticRequestSpec {
 
@@ -101,6 +131,9 @@ class DocLifecycleMgmtSpec
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is empty"
 
       // Need to actually change the file before running the test
+      val textChange: String =
+        """domain New {}""".stripMargin
+
       var p = new java.io.PrintWriter(new File(emptyDocURI))
       try { p.println(textChange) }
       finally { p.close() }

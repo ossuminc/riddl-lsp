@@ -107,6 +107,8 @@ package server {
     }
 
     trait ChangeOneErrorFileSpec extends OpenOneErrorFileSpec {
+      val textChange = "domain"
+
       val changeNotification: DidChangeTextDocumentParams =
         new DidChangeTextDocumentParams()
 
@@ -115,17 +117,17 @@ package server {
       changeNotification.setTextDocument(versionedDocIdentifier)
 
       val changes = new TextDocumentContentChangeEvent()
-      changes.setText("the")
+      changes.setText(textChange)
       val changeRange = new lsp4j.Range()
 
       val changeStart = new Position()
-      changeStart.setLine(11)
-      changeStart.setCharacter(21)
+      changeStart.setLine(5)
+      changeStart.setCharacter(1)
       changeRange.setStart(changeStart)
 
       val changeEnd = new Position()
-      changeEnd.setLine(11)
-      changeEnd.setCharacter(24)
+      changeEnd.setLine(5)
+      changeEnd.setCharacter(8)
       changeRange.setEnd(changeEnd)
 
       changes.setRange(changeRange)
@@ -135,7 +137,13 @@ package server {
     }
 
     trait ChangeEmptyFileSpec extends OpenEmptyFileSpec {
-      val textChange = "domain New {}"
+      val errorLine = 2
+      val errorLineChar = 7
+
+      val textChange: String =
+        """domain New {
+          |  typesss
+          |}""".stripMargin
 
       val changeNotification: DidChangeTextDocumentParams =
         new DidChangeTextDocumentParams()
