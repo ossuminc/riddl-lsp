@@ -1,5 +1,9 @@
 package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+
 /*
 - declaration
 - definition
@@ -10,6 +14,6 @@ package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 - documentSymbol
  */
 
-object SymbolInfoSpec {
+object SymbolInfoSpec extends AnyWordSpec with Matchers with ScalaFutures {
   
 }

@@ -1,5 +1,9 @@
 package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+
 /*
 - formatting
 - onTypeFormatting
@@ -8,6 +12,6 @@ package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 - prepareRename
  */
 
-class FormattingAndRenamingSpec {
+class FormattingAndRenamingSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
 }
