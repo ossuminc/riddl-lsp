@@ -11,13 +11,7 @@ import com.ossuminc.riddl.lsp.utils.parsing.{
 
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.jsonrpc.messages
-import org.scalatest.concurrent.Futures.{whenReady, whenReadyImpl}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.must.Matchers
-import org.scalatest.wordspec.AnyWordSpec
 
-import java.io.File
 import java.util
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.Future

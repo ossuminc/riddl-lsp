@@ -64,7 +64,7 @@ object ActionsAndLenses {
       }
       .getOrElse(
         Future
-          .failed(new UnavailableResourceException())
+          .failed(new Throwable("Server not initialized with a doc"))
           .asJava
           .toCompletableFuture
       )
