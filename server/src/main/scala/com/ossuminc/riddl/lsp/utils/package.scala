@@ -1,5 +1,7 @@
 package com.ossuminc.riddl.lsp
 
+import com.ossuminc.riddl.language.AST
+import com.ossuminc.riddl.language.Messages.Messages
 import org.eclipse.lsp4j.{
   CompletionOptions,
   InitializeResult,

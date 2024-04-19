@@ -4,6 +4,7 @@ import com.ossuminc.riddl.language.AST
 import com.ossuminc.riddl.language.Messages.Messages
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.lsp.utils.parseFromURI
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object parsing {
   def getRootFromUri(uri: String): String = {

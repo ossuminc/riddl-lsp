@@ -1,12 +1,25 @@
 package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 
+import com.ossum.riddl.lsp.server.initializationSpecs.{
+  OpenNoErrorFileSpec,
+  OpenOneErrorFileSpec
+}
+import com.ossum.riddl.lsp.server.requestSpecs.DiagnosticRequestSpec
+import org.eclipse.lsp4j.DocumentDiagnosticReportKind
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+
+import scala.jdk.FutureConverters.*
+import scala.jdk.CollectionConverters.*
+
 /*
 - codeAction
 - codeLens
 - codeResolve
  */
 
-class ActionsAndLensesSpec {
+class ActionsAndLensesSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
   "fail requesting for diagnostic from file with no errors" in new OpenNoErrorFileSpec
     with DiagnosticRequestSpec {
@@ -26,5 +39,5 @@ class ActionsAndLensesSpec {
       report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getCharacter mustEqual errorCharOnLine
     }
   }
-  
+
 }

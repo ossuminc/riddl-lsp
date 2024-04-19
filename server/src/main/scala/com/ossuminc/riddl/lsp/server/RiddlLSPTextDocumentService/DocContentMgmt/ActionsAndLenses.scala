@@ -1,5 +1,23 @@
 package com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocContentMgmt
 
+import com.ossuminc.riddl.language.Messages.Messages
+import com.ossuminc.riddl.language.{AST, Messages}
+import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocLifecycleMgmt.checkMessagesInASTAndFailOrDo
+import com.ossuminc.riddl.lsp.utils.implicits.*
+import org.eclipse.lsp4j.{
+  Diagnostic,
+  DiagnosticSeverity,
+  DocumentDiagnosticParams,
+  DocumentDiagnosticReport,
+  RelatedFullDocumentDiagnosticReport
+}
+
+import java.util.concurrent.CompletableFuture
+import scala.concurrent.Future
+import scala.xml.include.UnavailableResourceException
+import scala.jdk.CollectionConverters.*
+import scala.jdk.FutureConverters.*
+
 /*
 - codeAction
 - codeLens
@@ -7,6 +25,8 @@ package com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocContentMgmt
  */
 
 object ActionsAndLenses {
+  import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.vars
+
   def diagnostic(
       params: DocumentDiagnosticParams
   ): CompletableFuture[DocumentDiagnosticReport] = {
@@ -21,7 +41,7 @@ object ActionsAndLenses {
         case Messages.Warning        => DiagnosticSeverity.Warning
       }
 
-    docAST
+    vars.docAST
       .map { ast =>
         checkMessagesInASTAndFailOrDo[DocumentDiagnosticReport](
           params.getTextDocument.getUri,

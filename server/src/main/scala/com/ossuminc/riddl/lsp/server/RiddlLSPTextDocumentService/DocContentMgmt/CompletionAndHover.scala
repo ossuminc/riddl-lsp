@@ -1,8 +1,14 @@
 package com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocContentMgmt
 
-import org.eclipse.lsp4j.{CompletionList, CompletionParams}
+import com.ossuminc.riddl.language.Messages
+import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocLifecycleMgmt.checkMessagesInASTAndFailOrDo
+import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams}
+import org.eclipse.lsp4j.jsonrpc.messages
 
 import java.util.concurrent.CompletableFuture
+import java.util
+import scala.concurrent.Future
+import scala.jdk.CollectionConverters.*
 
 /*
 - completion
@@ -12,7 +18,11 @@ import java.util.concurrent.CompletableFuture
  */
 
 object CompletionAndHover {
-  def completion(position: CompletionParams): CompletableFuture[
+  import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.vars
+
+  def completion(
+      position: CompletionParams
+  ): CompletableFuture[
     messages.Either[util.List[CompletionItem], CompletionList]
   ] = checkMessagesInASTAndFailOrDo[
     messages.Either[util.List[CompletionItem], CompletionList]

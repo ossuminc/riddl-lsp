@@ -2,6 +2,7 @@ package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 
 import com.ossum.riddl.lsp.server.initializationSpecs.{
   DocumentIdentifierSpec,
+  OpenEmptyFileSpec,
   OpenNoErrorFileSpec
 }
 import org.eclipse.lsp4j.{
@@ -13,9 +14,13 @@ import org.eclipse.lsp4j.{
   Position
 }
 import org.eclipse.lsp4j.jsonrpc.messages
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import java.util
 import java.util.concurrent.CompletableFuture
+import scala.jdk.FutureConverters.*
 import scala.concurrent.Future
 
 /*
@@ -25,7 +30,10 @@ import scala.concurrent.Future
 - signatureHelp
  */
 
-class CompletionAndHoverSpec {
+class CompletionAndHoverSpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaFutures {
 
   trait CompletionRequestSpec extends DocumentIdentifierSpec {
 

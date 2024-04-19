@@ -1,6 +1,14 @@
 package com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService
 
-import com.ossum.riddl.lsp.server.InitializationSpecs.*
+import com.ossuminc.riddl.language.AST
+import com.ossuminc.riddl.language.Messages.Messages
+import com.ossuminc.riddl.lsp.utils.parseFromURI
+import com.ossuminc.riddl.lsp.utils.implicits.*
+import com.ossuminc.riddl.lsp.utils.parsing.{
+  parseDocFromSource,
+  parseDocFromString
+}
+
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages
@@ -21,33 +29,37 @@ object DocLifecycleMgmt {
 
   // Updating Vars
   private def updateDocLines(): Unit = {
-    docLines =
-      if riddlDoc.isDefined then riddlDoc.getOrElse("").getLinesFromText
+    vars.docLines =
+      if vars.riddlDoc.isDefined then
+        vars.riddlDoc.getOrElse("").getLinesFromText
       else Seq()
   }
 
-  private def updateParsedDoc(fromURL: Boolean = true): Unit = {
-    if fromURL then docAST = docURI.flatMap(parseDocFromSource)
-    else docAST = riddlDoc.flatMap(parseDocFromString)
+  private def updateParsedDoc(
+      fromURL: Boolean = true
+  ): Unit = {
+    vars.docAST =
+      if fromURL then vars.docURI.flatMap(parseDocFromSource)
+      else vars.riddlDoc.flatMap(parseDocFromString)
 
     updateDocLines()
   }
 
   private def updateRIDDLDocFromURI(
-      uri: String = docURI.getOrElse("")
+      docURI: String
   ): Unit = {
-    val data = parseFromURI(uri)
-    riddlDoc = if data.nonEmpty then Some(data) else None
+    val data = parseFromURI(docURI)
+    vars.riddlDoc = if data.nonEmpty then Some(data) else None
   }
 
-  private def checkMessagesInASTAndFailOrDo[T](
+  def checkMessagesInASTAndFailOrDo[T](
       requestURI: String,
       doOnMessages: (msgs: Messages) => Future[T]
   ): CompletableFuture[T] = {
     val astOpt: Option[Either[Messages, AST.Root]] =
-      if !docURI.contains(requestURI) then {
+      if !vars.docURI.contains(requestURI) then {
         parseDocFromSource(requestURI)
-      } else docAST
+      } else vars.docAST
 
     val resultF: Future[T] = astOpt match {
       case Some(ast) =>
@@ -71,56 +83,79 @@ object DocLifecycleMgmt {
 
     resultF.asJava.toCompletableFuture
   }
-  def didOpen(params: DidOpenTextDocumentParams): Unit = {
-    riddlDoc = Some(params.getTextDocument.getText)
-    docURI = Some(params.getTextDocument.getUri)
+
+  def didOpen(
+      params: DidOpenTextDocumentParams
+  ): Unit = {
+    vars.riddlDoc = Some(params.getTextDocument.getText)
+    vars.docURI = Some(params.getTextDocument.getUri)
     updateParsedDoc()
   }
 
-  def didChange(params: DidChangeTextDocumentParams): Unit = {
-    def patchLine(line: String, range: lsp4j.Range, text: String) = line.patch(
-      range.getStart.getCharacter,
-      text,
-      range.getEnd.getCharacter - range.getStart.getCharacter
-    )
+  def didChange(
+      params: DidChangeTextDocumentParams
+  ): Unit = {
+    def patchLine(
+        line: String,
+        text: String,
+        range: lsp4j.Range = lsp4j.Range()
+    ): String =
+      line.patch(
+        range.getStart.getCharacter - 1,
+        text,
+        range.getEnd.getCharacter - range.getStart.getCharacter
+      )
 
-    riddlDoc = riddlDoc.map(doc =>
-      var docLines: Seq[String] = doc.linesIterator.toSeq
+    vars.riddlDoc = vars.riddlDoc.map { doc =>
       val changes = params.getContentChanges.asScala.toSeq
-      if docLines.nonEmpty then
+      var docLines: Seq[String] = doc.linesIterator.toSeq
+
+      if docLines.nonEmpty then {
         changes.foreach { change =>
-          val changeRangeStart: Position = change.getRange.getStart
+          val changeRangeStart: Position =
+            change.getRange.getStart
           val changeRangeEnd: Position = change.getRange.getEnd
           val changesToPatch: Seq[String] = docLines.slice(
-            changeRangeStart.getLine,
+            changeRangeStart.getLine - 1,
             changeRangeEnd.getLine
           )
           val changeLines = change.getText.getLinesFromText
+
           val startLinePatch: String =
-            patchLine(docLines.head, change.getRange, changeLines.head)
-          val middlePatch: Seq[String] = changeLines.slice(1, -1)
-          val endLinePatch: String =
-            patchLine(docLines.last, change.getRange, changeLines.last)
+            patchLine(
+              changesToPatch.head,
+              changeLines.head,
+              change.getRange
+            )
+          val endPatch: Seq[String] =
+            changesToPatch.zip(changeLines).drop(1).map { (toPatch, patch) =>
+              patchLine(toPatch, patch)
+            }
 
-          val finalPatch = startLinePatch +: middlePatch :+ endLinePatch
-          docLines = docLines.patch(
-            changeRangeStart.getLine, // start of replacement
-            startLinePatch +: middlePatch :+ endLinePatch,
-            changeRangeEnd.getLine - changeRangeStart.getLine // length to replace (will be deleted)
-          )
+          val finalPatch = startLinePatch +: endPatch
+          docLines = docLines
+            .patch(
+              changeRangeStart.getLine - 1, // start of replacement
+              finalPatch,
+              changeRangeEnd.getLine - changeRangeStart.getLine + 1 // length to replace (will be deleted)
+            )
         }
-      else docLines = Seq(changes.map(_.getText).mkString("\n"))
-      docLines.mkString
-    )
-    updateParsedDoc()
-  }
-
-  def didClose(params: DidCloseTextDocumentParams): Unit = {
-    riddlDoc = None
+      } else docLines = changes.map(_.getText)
+      docLines.mkString("\n")
+    }
     updateParsedDoc(false)
   }
 
-  def didSave(params: DidSaveTextDocumentParams): Unit = {
+  def didClose(
+      params: DidCloseTextDocumentParams
+  ): Unit = {
+    vars.riddlDoc = None
+    updateParsedDoc(false)
+  }
+
+  def didSave(
+      params: DidSaveTextDocumentParams
+  ): Unit = {
     updateRIDDLDocFromURI(params.getTextDocument.getUri)
     updateParsedDoc()
   }

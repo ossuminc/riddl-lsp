@@ -1,6 +1,10 @@
 package com.ossum.riddl.lsp.server.LSPTextDocumentSpec
 
 import com.ossum.riddl.lsp.server.initializationSpecs.*
+import com.ossum.riddl.lsp.server.requestSpecs.{
+  CompletionRequestSpec,
+  DiagnosticRequestSpec
+}
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages
@@ -17,10 +21,7 @@ import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DocLifecycleMgmtSpec
-    extends AnyWordSpec
-    with Matchers
-    with ScalaFutures {
+class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
   "RiddlLSPTextDocumentService" must {
 
@@ -101,6 +102,8 @@ class DocLifecycleMgmtSpec
       position.setLine(errorLine)
       position.setCharacter(errorCharOnLine)
       requestCompletion()
+
+      completionResultF.asScala.onComplete(println)
 
       completionResultF.asScala.failed.futureValue mustBe a[Throwable]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
