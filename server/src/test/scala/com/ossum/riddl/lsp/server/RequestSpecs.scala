@@ -29,7 +29,7 @@ object RequestSpecs {
   trait CompletionRequestSpec extends DocumentIdentifierSpec {
     var completionResultF: CompletableFuture[
       messages.Either[util.List[CompletionItem], CompletionList]
-    ] = Future.failed(new Throwable()).asJava.toCompletableFuture
+    ] = Future.failed(new Exception()).asJava.toCompletableFuture
 
     def requestCompletion(): Unit = {
       params.setPosition(position)

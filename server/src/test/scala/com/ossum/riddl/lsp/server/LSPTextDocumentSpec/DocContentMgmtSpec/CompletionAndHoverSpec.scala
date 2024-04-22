@@ -34,7 +34,7 @@ class CompletionAndHoverSpec
 
     Files.delete(tempFilePath)
 
-    completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+    completionResultF.asScala.failed.futureValue mustBe a[Exception]
     completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
   }
 
@@ -47,7 +47,7 @@ class CompletionAndHoverSpec
 
     Files.delete(tempFilePath)
 
-    completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+    completionResultF.asScala.failed.futureValue mustBe a[Exception]
     completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is empty"
   }
 

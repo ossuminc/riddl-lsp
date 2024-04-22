@@ -46,19 +46,19 @@ object Utils {
     val resultF: Future[T] = astOpt match {
       case Some(ast) =>
         if ast.isRight then
-          Future.failed(new Throwable("Document has no errors"))
+          Future.failed(new Exception("Document has no errors"))
         else
           ast match {
             case Left(msgs) => doOnMessages(msgs)
-            case _ => Future.failed(Throwable("No errors found in document"))
+            case _ => Future.failed(Exception("No errors found in document"))
           }
       case None =>
         Future.failed(
           if parseDocFromSource(
               requestURI
             ).isEmpty
-          then new Throwable("Document is empty")
-          else new Throwable("Document is closed")
+          then new Exception("Document is empty")
+          else new Exception("Document is closed")
         )
     }
 

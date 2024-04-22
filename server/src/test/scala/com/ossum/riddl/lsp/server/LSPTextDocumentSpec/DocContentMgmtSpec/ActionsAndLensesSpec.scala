@@ -35,7 +35,7 @@ class ActionsAndLensesSpec
 
     Files.delete(tempFilePath)
 
-    diagnosticResultF.asScala.failed.futureValue mustBe a[Throwable]
+    diagnosticResultF.asScala.failed.futureValue mustBe a[Exception]
     diagnosticResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
   }
 

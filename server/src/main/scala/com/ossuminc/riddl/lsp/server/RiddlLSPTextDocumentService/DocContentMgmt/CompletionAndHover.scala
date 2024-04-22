@@ -42,7 +42,7 @@ object CompletionAndHover {
           )
       else
         Future.failed(
-          new Throwable(
+          new Exception(
             "Requested position in document does not have an error"
           )
         )

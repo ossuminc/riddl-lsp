@@ -52,7 +52,7 @@ class DocLifecycleMgmtSpec
       position.setCharacter(1)
       requestCompletion()
 
-      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue mustBe a[Exception]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is closed"
 
       resetTempFile(tempFilePath, fileName)
@@ -66,7 +66,7 @@ class DocLifecycleMgmtSpec
       position.setCharacter(1)
       requestCompletion()
 
-      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue mustBe a[Exception]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
 
       resetTempFile(tempFilePath, fileName)
@@ -91,7 +91,7 @@ class DocLifecycleMgmtSpec
     "fail requesting for diagnostic from file with no errors" in new OpenNoErrorFileSpec
       with DiagnosticRequestSpec {
 
-      diagnosticResultF.asScala.failed.futureValue mustBe a[Throwable]
+      diagnosticResultF.asScala.failed.futureValue mustBe a[Exception]
       diagnosticResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
 
       resetTempFile(tempFilePath, fileName)
@@ -117,7 +117,7 @@ class DocLifecycleMgmtSpec
       position.setCharacter(errorCharOnLine)
       requestCompletion()
 
-      completionResultF.asScala.failed.futureValue mustBe a[Throwable]
+      completionResultF.asScala.failed.futureValue mustBe a[Exception]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
 
       resetTempFile(tempFilePath, fileName)
