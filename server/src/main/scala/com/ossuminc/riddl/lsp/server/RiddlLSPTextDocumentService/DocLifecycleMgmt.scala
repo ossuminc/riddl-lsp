@@ -1,40 +1,37 @@
 package com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService
 
-import com.ossuminc.riddl.language.AST
-import com.ossuminc.riddl.language.Messages.Messages
-import com.ossuminc.riddl.lsp.utils.parseFromURI
 import com.ossuminc.riddl.lsp.utils.implicits.*
+import com.ossuminc.riddl.lsp.utils.parsing
 import com.ossuminc.riddl.lsp.utils.parsing.{
   parseDocFromSource,
-  parseDocFromString
+  parseDocFromString,
+  parseFromURI
 }
-
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.*
 
 import java.util
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
 import scala.language.postfixOps
 
 object DocLifecycleMgmt {
+  import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.Vars.*
 
   // Updating Vars
   private def updateDocLines(): Unit = {
-    vars.docLines =
-      if vars.riddlDoc.isDefined then
-        vars.riddlDoc.getOrElse("").getLinesFromText
+    docLines =
+      if riddlDoc.isDefined then riddlDoc.getOrElse("").getLinesFromText
       else Seq()
+
   }
 
   private def updateParsedDoc(
       fromURL: Boolean = true
   ): Unit = {
-    vars.docAST =
-      if fromURL then vars.docURI.flatMap(parseDocFromSource)
-      else vars.riddlDoc.flatMap(parseDocFromString)
+    docAST =
+      if fromURL then docURI.flatMap(parseDocFromSource)
+      else riddlDoc.flatMap(parseDocFromString)
 
     updateDocLines()
   }
@@ -43,46 +40,14 @@ object DocLifecycleMgmt {
       docURI: String
   ): Unit = {
     val data = parseFromURI(docURI)
-    vars.riddlDoc = if data.nonEmpty then Some(data) else None
-  }
-
-  def checkMessagesInASTAndFailOrDo[T](
-      requestURI: String,
-      doOnMessages: (msgs: Messages) => Future[T]
-  ): CompletableFuture[T] = {
-    val astOpt: Option[Either[Messages, AST.Root]] =
-      if !vars.docURI.contains(requestURI) then {
-        parseDocFromSource(requestURI)
-      } else vars.docAST
-
-    val resultF: Future[T] = astOpt match {
-      case Some(ast) =>
-        if ast.isRight then
-          Future.failed(new Throwable("Document has no errors"))
-        else {
-          ast match {
-            case Left(msgs) => doOnMessages(msgs)
-            case _ => Future.failed(Throwable("No errors found in document"))
-          }
-        }
-      case None =>
-        Future.failed(
-          if parseDocFromSource(
-              requestURI
-            ).isEmpty
-          then new Throwable("Document is empty")
-          else new Throwable("Document is closed")
-        )
-    }
-
-    resultF.asJava.toCompletableFuture
+    riddlDoc = if data.nonEmpty then Some(data) else None
   }
 
   def didOpen(
       params: DidOpenTextDocumentParams
   ): Unit = {
-    vars.riddlDoc = Some(params.getTextDocument.getText)
-    vars.docURI = Some(params.getTextDocument.getUri)
+    riddlDoc = Some(params.getTextDocument.getText)
+    docURI = Some(params.getTextDocument.getUri)
     updateParsedDoc()
   }
 
@@ -100,7 +65,7 @@ object DocLifecycleMgmt {
         range.getEnd.getCharacter - range.getStart.getCharacter
       )
 
-    vars.riddlDoc = vars.riddlDoc.map { doc =>
+    riddlDoc = riddlDoc.map { doc =>
       val changes = params.getContentChanges.asScala.toSeq
       var docLines: Seq[String] = doc.linesIterator.toSeq
 
@@ -143,7 +108,7 @@ object DocLifecycleMgmt {
   def didClose(
       params: DidCloseTextDocumentParams
   ): Unit = {
-    vars.riddlDoc = None
+    riddlDoc = None
     updateParsedDoc(false)
   }
 

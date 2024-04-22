@@ -3,7 +3,7 @@ package com.ossuminc.riddl.lsp.utils
 import com.ossuminc.riddl.language.AST
 import com.ossuminc.riddl.language.Messages.Messages
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
-import com.ossuminc.riddl.lsp.utils.parseFromURI
+import parsing.parseFromURI
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object parsing {
@@ -26,4 +26,13 @@ object parsing {
     if docString.nonEmpty then
       Some(new TopLevelParser(RiddlParserInput(docString)).parseRoot())
     else None
+
+  def parseFromURI(uri: String): String = {
+    val source = io.Source.fromURL(uri)
+    try {
+      source.getLines().mkString("\n")
+    } finally {
+      source.close()
+    }
+  }
 }

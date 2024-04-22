@@ -1,27 +1,19 @@
 package com.ossum.riddl.lsp.server.LSPTextDocumentSpec.DocContentMgmtSpec
 
-import com.ossum.riddl.lsp.server.initializationSpecs.{
-  DocumentIdentifierSpec,
+import com.ossum.riddl.lsp
+import com.ossum.riddl.lsp.server.InitializationSpecs
+import com.ossum.riddl.lsp.server.InitializationSpecs.{
   OpenEmptyFileSpec,
   OpenNoErrorFileSpec
 }
-import org.eclipse.lsp4j.{
-  CompletionItem,
-  CompletionList,
-  CompletionParams,
-  DocumentDiagnosticParams,
-  DocumentDiagnosticReport,
-  Position
-}
-import org.eclipse.lsp4j.jsonrpc.messages
+import com.ossum.riddl.lsp.server.RequestSpecs.CompletionRequestSpec
+import org.scalatest.ParallelTestExecution
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-import java.util
-import java.util.concurrent.CompletableFuture
+import java.nio.file.Files
 import scala.jdk.FutureConverters.*
-import scala.concurrent.Future
 
 /*
 - completion
@@ -34,30 +26,13 @@ class CompletionAndHoverSpec
     extends AnyWordSpec
     with Matchers
     with ScalaFutures {
-
-  trait CompletionRequestSpec extends DocumentIdentifierSpec {
-
-    var completionResultF: CompletableFuture[
-      messages.Either[util.List[CompletionItem], CompletionList]
-    ] = Future.failed(new Throwable()).asJava.toCompletableFuture
-
-    def requestCompletion(): Unit = {
-      params.setPosition(position)
-
-      completionResultF = service.completion(params)
-    }
-
-    val params = new CompletionParams()
-    params.setTextDocument(textDocumentIdentifier)
-    val position = new Position()
-
-  }
-
   "successfully open everything.riddl, failing to retrieve a completion" in new OpenNoErrorFileSpec
     with CompletionRequestSpec {
     position.setLine(1)
     position.setCharacter(1)
     requestCompletion()
+
+    Files.delete(tempFilePath)
 
     completionResultF.asScala.failed.futureValue mustBe a[Throwable]
     completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
@@ -69,6 +44,8 @@ class CompletionAndHoverSpec
     position.setLine(1)
     position.setCharacter(1)
     requestCompletion()
+
+    Files.delete(tempFilePath)
 
     completionResultF.asScala.failed.futureValue mustBe a[Throwable]
     completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is empty"

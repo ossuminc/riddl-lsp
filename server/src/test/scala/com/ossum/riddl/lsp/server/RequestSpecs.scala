@@ -1,6 +1,7 @@
 package com.ossum.riddl.lsp.server
 
-import com.ossum.riddl.lsp.server.initializationSpecs.DocumentIdentifierSpec
+import com.ossum.riddl.lsp
+import com.ossum.riddl.lsp.utils.DocumentIdentifierSpec
 import org.eclipse.lsp4j.{
   CompletionItem,
   CompletionList,
@@ -17,7 +18,7 @@ import org.eclipse.lsp4j.jsonrpc.messages
 import scala.concurrent.Future
 import scala.jdk.FutureConverters.*
 
-object requestSpecs {
+object RequestSpecs {
   trait DiagnosticRequestSpec extends DocumentIdentifierSpec {
     val request = new DocumentDiagnosticParams(textDocumentIdentifier)
 

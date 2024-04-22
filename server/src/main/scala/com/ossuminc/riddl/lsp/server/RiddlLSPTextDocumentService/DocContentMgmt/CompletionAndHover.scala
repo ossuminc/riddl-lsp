@@ -1,7 +1,8 @@
 package com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocContentMgmt
 
 import com.ossuminc.riddl.language.Messages
-import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.DocLifecycleMgmt.checkMessagesInASTAndFailOrDo
+import com.ossuminc.riddl.lsp.utils.Utils
+import com.ossuminc.riddl.lsp.utils.Utils.checkMessagesInASTAndFailOrDo
 import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams}
 import org.eclipse.lsp4j.jsonrpc.messages
 
@@ -18,7 +19,7 @@ import scala.jdk.CollectionConverters.*
  */
 
 object CompletionAndHover {
-  import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.vars
+  import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService.Vars.*
 
   def completion(
       position: CompletionParams

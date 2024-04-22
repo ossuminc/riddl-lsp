@@ -1,28 +1,28 @@
 package com.ossum.riddl.lsp.server.LSPTextDocumentSpec
 
-import com.ossum.riddl.lsp.server.initializationSpecs.*
-import com.ossum.riddl.lsp.server.requestSpecs.{
-  CompletionRequestSpec,
-  DiagnosticRequestSpec
-}
+import com.ossum.riddl.lsp
+import com.ossum.riddl.lsp.server.*
+import com.ossum.riddl.lsp.server.InitializationSpecs.*
+import com.ossum.riddl.lsp.server.RequestSpecs.*
+import com.ossum.riddl.lsp.utils.resetTempFile
+import com.ossuminc.riddl.lsp.server.RiddlLSPServer
 import org.eclipse.lsp4j
 import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.jsonrpc.messages
-import org.scalatest.concurrent.Futures.{whenReady, whenReadyImpl}
+import org.scalatest.{BeforeAndAfterAll, ParallelTestExecution}
+import org.scalatest.concurrent.Futures.whenReady
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.io.File
-import java.util
-import java.util.concurrent.CompletableFuture
-import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
-
+class DocLifecycleMgmtSpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaFutures
+    with BeforeAndAfterAll {
   "RiddlLSPTextDocumentService" must {
 
     "successfully open everythingOneError.riddl, retrieving a completion" in new OpenOneErrorFileSpec
@@ -37,6 +37,8 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
         completion.getRight.getItems.asScala.length mustEqual 1
         completion.getRight.getItems.asScala.head.getDetail mustEqual "Expected one of (end-of-input | whitespace after keyword)"
       }
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "successfully close everythingOneError.riddl, failing to retrieve a completion" in new OpenOneErrorFileSpec
@@ -52,16 +54,22 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
       completionResultF.asScala.failed.futureValue mustBe a[Throwable]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document is closed"
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "fail for completion error from a file with no errors" in new OpenNoErrorFileSpec
       with CompletionRequestSpec {
+      val newFolder = "NoErrorFailCompletion"
+
       position.setLine(1)
       position.setCharacter(1)
       requestCompletion()
 
       completionResultF.asScala.failed.futureValue mustBe a[Throwable]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "fail for completion from a file with an error" in new OpenOneErrorFileSpec
@@ -76,6 +84,8 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
         completionList.getRight.getItems.asScala.head.getDetail mustEqual
           """Expected one of (end-of-input | whitespace after keyword)"""
       }
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "fail requesting for diagnostic from file with no errors" in new OpenNoErrorFileSpec
@@ -83,6 +93,8 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
       diagnosticResultF.asScala.failed.futureValue mustBe a[Throwable]
       diagnosticResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "succeed requesting for diagnostic from file with one error" in new OpenOneErrorFileSpec
@@ -95,6 +107,8 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
         report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getLine mustEqual errorLine
         report.getRelatedFullDocumentDiagnosticReport.getItems.asScala.head.getRange.getStart.getCharacter mustEqual errorCharOnLine
       }
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "successfully change everythingOneError.riddl, fixing the error" in new ChangeOneErrorFileSpec
@@ -103,10 +117,10 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
       position.setCharacter(errorCharOnLine)
       requestCompletion()
 
-      completionResultF.asScala.onComplete(println)
-
       completionResultF.asScala.failed.futureValue mustBe a[Throwable]
       completionResultF.asScala.failed.futureValue.getMessage mustEqual "Document has no errors"
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "successfully change empty.riddl, expecting an error" in new ChangeEmptyFileSpec
@@ -121,6 +135,8 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
         completionList.getRight.getItems.asScala.head.getDetail mustEqual
           """Expected one of (end-of-input | whitespace after keyword)"""
       }
+
+      resetTempFile(tempFilePath, fileName)
     }
 
     "successfully save empty.riddl" in new OpenEmptyFileSpec
@@ -137,7 +153,7 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
       val textChange: String =
         """domain New {}""".stripMargin
 
-      var p = new java.io.PrintWriter(new File(emptyDocURI))
+      val p = new java.io.PrintWriter(new File(tempFilePath.toString))
       try { p.println(textChange) }
       finally { p.close() }
 
@@ -156,9 +172,7 @@ class DocLifecycleMgmtSpec extends AnyWordSpec with Matchers with ScalaFutures {
           """Expected one of ("/*" | "//" | "???" | "application" | "author" | "by" | "command" | "constant" | "context" | "domain" | "epic" | "event" | "graph" | "import" | "include" | "option" | "query" | "record" | "result" | "saga" | "table" | "term" | "type" | "user")"""
       }
 
-      p = new java.io.PrintWriter(new File(emptyDocURI))
-      try { p.print("") }
-      finally { p.close() }
+      resetTempFile(tempFilePath, fileName)
     }
   }
 
