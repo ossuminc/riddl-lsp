@@ -1,175 +1,155 @@
-package com.ossum.riddl.lsp
+package com.ossum.riddl.lsp.server
 
-import com.ossuminc.riddl.lsp.server.RiddlLSPTextDocumentService
 import org.eclipse.lsp4j.*
 
-import java.nio.file.Path
 import scala.collection.immutable.List
-import scala.io.{BufferedSource, Source}
-
 import org.eclipse.lsp4j
+
 import scala.jdk.CollectionConverters.*
+import com.ossum.riddl.lsp
+import com.ossum.riddl.lsp.utils.FileSpecs.*
+import com.ossum.riddl.lsp.utils.{
+  DocumentIdentifierSpec,
+  FileSpecs,
+  createTempFile
+}
+import com.ossuminc.riddl.lsp.utils.parsing.parseFromURI
+import com.ossuminc.riddl.lsp.utils.parsing
 
-package server {
+import java.nio.file.Path
 
-  import com.ossuminc.riddl.lsp.utils.parseFromURI
+object InitializationSpecs {
+  trait NoErrorInitializeSpec
+      extends DocumentIdentifierSpec
+      with NoErrorFileSpec {
+    val noErrorDocURI: String = tempFilePath.toUri.toString
+    val noErrorDoc: String = parseFromURI(noErrorDocURI)
 
-  object InitializationSpecs {
-    trait DocumentIdentifierSpec {
-      val textDocumentIdentifier: TextDocumentIdentifier =
-        new TextDocumentIdentifier()
+    val textDocumentItem: TextDocumentItem = new TextDocumentItem()
+    textDocumentItem.setText(noErrorDoc)
+    textDocumentItem.setUri(noErrorDocURI)
+    textDocumentIdentifier.setUri(noErrorDocURI)
+  }
 
-      val service: RiddlLSPTextDocumentService =
-        new RiddlLSPTextDocumentService()
-    }
+  trait OneErrorInitializeSpec
+      extends DocumentIdentifierSpec
+      with OneErrorFileSpec {
+    val oneErrorDocURI: String = tempFilePath.toUri.toString
+    val oneErrorDoc: String = parseFromURI(oneErrorDocURI)
 
-    trait NonEmptyFileSpec {
-      val filePath: String
-    }
+    val textDocumentItem: TextDocumentItem = new TextDocumentItem()
+    textDocumentItem.setText(oneErrorDoc)
+    textDocumentItem.setUri(oneErrorDocURI)
+    textDocumentIdentifier.setUri(oneErrorDocURI)
+  }
 
-    trait NoErrorFileSpec extends NonEmptyFileSpec {
-      override val filePath =
-        "server/src/test/resources/everything.riddl"
-    }
+  trait EmptyInitializeSpec extends DocumentIdentifierSpec {
+    val resPath: String = "server/src/test/resources"
 
-    trait OneErrorFileSpec extends NonEmptyFileSpec {
-      override val filePath =
-        "server/src/test/resources/everythingOneError.riddl"
+    val fileName = "empty.riddl"
+    val tempFilePath: Path = createTempFile(fileName)
 
-      val errorLine = 5
-      val errorCharOnLine = 7
-    }
+    val emptyDocURIFromPath: String = tempFilePath.toUri.toString
 
-    trait NoErrorInitializeSpec
-        extends NoErrorFileSpec
-        with DocumentIdentifierSpec {
-      val noErrorDocURI: String = Path.of(filePath).toUri.toString
-      val noErrorDoc: String = parseFromURI(noErrorDocURI)
+    val textDocumentItem: TextDocumentItem = new TextDocumentItem()
+    textDocumentItem.setText("")
+    textDocumentItem.setUri(emptyDocURIFromPath)
+    textDocumentIdentifier.setUri(emptyDocURIFromPath)
+  }
 
-      val textDocumentItem: TextDocumentItem = new TextDocumentItem()
-      textDocumentItem.setText(noErrorDoc)
-      textDocumentItem.setUri(noErrorDocURI)
-      textDocumentIdentifier.setUri(noErrorDocURI)
-    }
+  trait OpenNoErrorFileSpec extends NoErrorInitializeSpec {
+    val openNotification: DidOpenTextDocumentParams =
+      new DidOpenTextDocumentParams()
+    openNotification.setTextDocument(
+      textDocumentItem
+    )
 
-    trait OneErrorInitializeSpec
-        extends OneErrorFileSpec
-        with DocumentIdentifierSpec {
-      val oneErrorDocURI: String = Path.of(filePath).toUri.toString
-      val oneErrorDoc: String = parseFromURI(oneErrorDocURI)
+    service.didOpen(openNotification)
+  }
 
-      val textDocumentItem: TextDocumentItem = new TextDocumentItem()
-      textDocumentItem.setText(oneErrorDoc)
-      textDocumentItem.setUri(oneErrorDocURI)
-      textDocumentIdentifier.setUri(oneErrorDocURI)
-    }
+  trait OpenOneErrorFileSpec extends OneErrorInitializeSpec {
+    val openNotification: DidOpenTextDocumentParams =
+      new DidOpenTextDocumentParams()
+    openNotification.setTextDocument(
+      textDocumentItem
+    )
 
-    trait EmptyInitializeSpec extends DocumentIdentifierSpec {
-      val emptyDocURI = "server/src/test/resources/empty.riddl"
+    service.didOpen(openNotification)
+  }
 
-      val emptyDocURIFromPath: String =
-        Path.of(emptyDocURI).toUri.toString
+  trait OpenEmptyFileSpec extends EmptyInitializeSpec {
+    val openNotification: DidOpenTextDocumentParams =
+      new DidOpenTextDocumentParams()
+    openNotification.setTextDocument(
+      textDocumentItem
+    )
 
-      val textDocumentItem: TextDocumentItem = new TextDocumentItem()
-      textDocumentItem.setText("")
-      textDocumentItem.setUri(emptyDocURIFromPath)
-      textDocumentIdentifier.setUri(emptyDocURIFromPath)
-    }
+    service.didOpen(openNotification)
+  }
 
-    trait OpenNoErrorFileSpec extends NoErrorInitializeSpec {
-      val openNotification: DidOpenTextDocumentParams =
-        new DidOpenTextDocumentParams()
-      openNotification.setTextDocument(
-        textDocumentItem
-      )
+  trait ChangeOneErrorFileSpec extends OpenOneErrorFileSpec {
+    val textChange = "domain"
 
-      service.didOpen(openNotification)
-    }
+    val changeNotification: DidChangeTextDocumentParams =
+      new DidChangeTextDocumentParams()
 
-    trait OpenOneErrorFileSpec extends OneErrorInitializeSpec {
-      val openNotification: DidOpenTextDocumentParams =
-        new DidOpenTextDocumentParams()
-      openNotification.setTextDocument(
-        textDocumentItem
-      )
+    val versionedDocIdentifier = new VersionedTextDocumentIdentifier()
+    versionedDocIdentifier.setUri(oneErrorDocURI)
+    changeNotification.setTextDocument(versionedDocIdentifier)
 
-      service.didOpen(openNotification)
-    }
+    val changes = new TextDocumentContentChangeEvent()
+    changes.setText(textChange)
+    val changeRange = new lsp4j.Range()
 
-    trait OpenEmptyFileSpec extends EmptyInitializeSpec {
-      val openNotification: DidOpenTextDocumentParams =
-        new DidOpenTextDocumentParams()
-      openNotification.setTextDocument(
-        textDocumentItem
-      )
+    val changeStart = new Position()
+    changeStart.setLine(5)
+    changeStart.setCharacter(1)
+    changeRange.setStart(changeStart)
 
-      service.didOpen(openNotification)
-    }
+    val changeEnd = new Position()
+    changeEnd.setLine(5)
+    changeEnd.setCharacter(8)
+    changeRange.setEnd(changeEnd)
 
-    trait ChangeOneErrorFileSpec extends OpenOneErrorFileSpec {
-      val textChange = "domain"
+    changes.setRange(changeRange)
+    changeNotification.setContentChanges(List(changes).asJava)
 
-      val changeNotification: DidChangeTextDocumentParams =
-        new DidChangeTextDocumentParams()
+    service.didChange(changeNotification)
+  }
 
-      val versionedDocIdentifier = new VersionedTextDocumentIdentifier()
-      versionedDocIdentifier.setUri(oneErrorDocURI)
-      changeNotification.setTextDocument(versionedDocIdentifier)
+  trait ChangeEmptyFileSpec extends OpenEmptyFileSpec {
+    val errorLine = 2
+    val errorLineChar = 7
 
-      val changes = new TextDocumentContentChangeEvent()
-      changes.setText(textChange)
-      val changeRange = new lsp4j.Range()
+    val textChange: String =
+      """domain New {
+        |  typesss
+        |}""".stripMargin
 
-      val changeStart = new Position()
-      changeStart.setLine(5)
-      changeStart.setCharacter(1)
-      changeRange.setStart(changeStart)
+    val changeNotification: DidChangeTextDocumentParams =
+      new DidChangeTextDocumentParams()
 
-      val changeEnd = new Position()
-      changeEnd.setLine(5)
-      changeEnd.setCharacter(8)
-      changeRange.setEnd(changeEnd)
+    val versionedDocIdentifier = new VersionedTextDocumentIdentifier()
+    versionedDocIdentifier.setUri(tempFilePath.toUri.toString)
+    changeNotification.setTextDocument(versionedDocIdentifier)
 
-      changes.setRange(changeRange)
-      changeNotification.setContentChanges(List(changes).asJava)
+    val changes = new TextDocumentContentChangeEvent()
+    changes.setText(textChange)
+    val changeRange = new lsp4j.Range()
 
-      service.didChange(changeNotification)
-    }
+    val changeStart = new Position()
+    changeStart.setLine(1)
+    changeStart.setCharacter(1)
+    changeRange.setStart(changeStart)
 
-    trait ChangeEmptyFileSpec extends OpenEmptyFileSpec {
-      val errorLine = 2
-      val errorLineChar = 7
+    val changeEnd = new Position()
+    changeEnd.setLine(1)
+    changeEnd.setCharacter(1)
+    changeRange.setEnd(changeEnd)
 
-      val textChange: String =
-        """domain New {
-          |  typesss
-          |}""".stripMargin
+    changes.setRange(changeRange)
+    changeNotification.setContentChanges(List(changes).asJava)
 
-      val changeNotification: DidChangeTextDocumentParams =
-        new DidChangeTextDocumentParams()
-
-      val versionedDocIdentifier = new VersionedTextDocumentIdentifier()
-      versionedDocIdentifier.setUri(emptyDocURI)
-      changeNotification.setTextDocument(versionedDocIdentifier)
-
-      val changes = new TextDocumentContentChangeEvent()
-      changes.setText(textChange)
-      val changeRange = new lsp4j.Range()
-
-      val changeStart = new Position()
-      changeStart.setLine(1)
-      changeStart.setCharacter(1)
-      changeRange.setStart(changeStart)
-
-      val changeEnd = new Position()
-      changeEnd.setLine(1)
-      changeEnd.setCharacter(1)
-      changeRange.setEnd(changeEnd)
-
-      changes.setRange(changeRange)
-      changeNotification.setContentChanges(List(changes).asJava)
-
-      service.didChange(changeNotification)
-    }
+    service.didChange(changeNotification)
   }
 }

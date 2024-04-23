@@ -4,9 +4,10 @@ Global / scalaVersion := "3.4.0"
 
 enablePlugins(OssumIncPlugin)
 
-lazy val riddl: Project = Root("riddl-lsp", "ossuminc", "com.ossuminc.riddl.lsp", startYr = 2024)
-  .configure(With.noPublishing, With.git, With.dynver)
-  .aggregate(server, plugin)
+lazy val riddl: Project =
+  Root("riddl-lsp", "ossuminc", "com.ossuminc.riddl.lsp", startYr = 2024)
+    .configure(With.noPublishing, With.git, With.dynver)
+    .aggregate(server, plugin)
 
 lazy val Server = config("server")
 lazy val server: Project = Module("server", "riddl-lsp-server")
@@ -26,7 +27,8 @@ lazy val server: Project = Module("server", "riddl-lsp-server")
       Dep.scopt,
       Dep.slf4j,
       Dep.lsp4j
-    )
+    ),
+    Test / parallelExecution := false
   )
 
 lazy val Plugin = config("plugin")
@@ -41,5 +43,6 @@ lazy val plugin: Project = Module("plugin", "riddl-lsp-plugin")
     buildInfoPackage := "com.ossuminc.riddl.lsp.plugin",
     buildInfoObject := "RiddlLSPPluginBuildInfo",
     description := "The plugin for supporting RIDDL in IntelliJ",
-    libraryDependencies ++= Dep.testing ++ Dep.basic
+    libraryDependencies ++= Dep.testing ++ Dep.basic,
+    Test / parallelExecution := false
   )
